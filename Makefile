@@ -18,7 +18,7 @@ host-configure:
 
 host-test: host-configure
 	@cmake --build $(HOST_BUILD)
-	@ctest --test-dir $(HOST_BUILD) --output-on-failure
+	@$(HOST_BUILD)/orca_tests --gtest_brief=1
 
 fw-build:
 	@if [ -f $(IDF_PATH)/export.sh ]; then \

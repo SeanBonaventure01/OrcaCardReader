@@ -11,6 +11,8 @@ class SeededRandom : public hal::Random {
  public:
   explicit SeededRandom(std::uint64_t seed = 1) : state_(seed) {}
 
+  void reseed(std::uint64_t seed) { state_ = seed; }
+
   std::uint32_t next_u32() override {
     std::uint64_t z = (state_ += 0x9E3779B97F4A7C15ULL);
     z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ULL;

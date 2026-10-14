@@ -1,0 +1,57 @@
+[
+  {
+    "name": "trigger_event",
+    "setup": [
+      {"method": "POST", "path": "/api/game/select", "body": {"id": "fare_paid"}},
+      {"method": "POST", "path": "/api/game/start"}
+    ],
+    "request": {"method": "POST", "path": "/api/events/trigger", "body": {"name": "RUSH HOUR", "duration_ms": 120000, "multiplier": 3}},
+    "response": {"status": 200, "body": {"id": 1, "kind": "multiplier", "name": "RUSH HOUR", "multiplier": 3.0, "start": 1000, "end": 121000, "random": false}}
+  },
+  {
+    "name": "status_during_event",
+    "setup": [
+      {"method": "POST", "path": "/api/game/select", "body": {"id": "fare_paid"}},
+      {"method": "POST", "path": "/api/game/start"},
+      {"method": "POST", "path": "/api/events/trigger", "body": {"kind": "cooldown_waiver", "name": "FREE RIDE", "duration_ms": 60000}}
+    ],
+    "request": {"method": "GET", "path": "/api/status", "auth": false},
+    "response": {"status": 200, "body": {"state": "running", "events": [
+      {"kind": "cooldown_waiver", "name": "FREE RIDE", "remaining_ms": 60000, "multiplier": 1.0}
+    ]}}
+  },
+  {
+    "name": "trigger_event_bad_kind",
+    "setup": [
+      {"method": "POST", "path": "/api/game/select", "body": {"id": "fare_paid"}},
+      {"method": "POST", "path": "/api/game/start"}
+    ],
+    "request": {"method": "POST", "path": "/api/events/trigger", "body": {"kind": "earthquake", "duration_ms": 1000}},
+    "response": {"status": 400, "body": {"error": "kind must be multiplier, cooldown_waiver or custom"}}
+  },
+  {
+    "name": "trigger_event_not_running",
+    "request": {"method": "POST", "path": "/api/events/trigger", "body": {"duration_ms": 1000}},
+    "response": {"status": 409, "body": {"error": "game is not running"}}
+  },
+  {
+    "name": "settings_get",
+    "request": {"method": "GET", "path": "/api/settings"},
+    "response": {"status": 200, "body": {"volume": 70, "brightness": 80, "led_brightness": 25, "led_count": 30, "led_max_ma": 450}}
+  },
+  {
+    "name": "settings_patch",
+    "request": {"method": "PATCH", "path": "/api/settings", "body": {"volume": 35}},
+    "response": {"status": 200, "body": {"volume": 35, "brightness": 80}}
+  },
+  {
+    "name": "settings_patch_invalid",
+    "request": {"method": "PATCH", "path": "/api/settings", "body": {"brightness": 0}},
+    "response": {"status": 400, "body": {"error": "brightness must be an integer between 5 and 100"}}
+  },
+  {
+    "name": "enrollment_close",
+    "request": {"method": "POST", "path": "/api/enrollment", "body": {"open": false}},
+    "response": {"status": 200, "body": {"open_enrollment": false}}
+  }
+]

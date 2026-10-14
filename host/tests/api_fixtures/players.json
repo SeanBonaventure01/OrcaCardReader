@@ -1,0 +1,48 @@
+[
+  {
+    "name": "players_empty",
+    "request": {"method": "GET", "path": "/api/players"},
+    "response": {"status": 200, "body": {"players": []}}
+  },
+  {
+    "name": "enroll_player",
+    "request": {"method": "POST", "path": "/api/players", "body": {"uid": "04:a1:b2:c3", "name": "Ghost"}},
+    "response": {"status": 201, "body": {"no": 1, "uid": "04A1B2C3", "name": "Ghost", "team": "", "banned": false, "points": 0}}
+  },
+  {
+    "name": "enroll_duplicate",
+    "setup": [{"method": "POST", "path": "/api/players", "body": {"uid": "04A1B2C3"}}],
+    "request": {"method": "POST", "path": "/api/players", "body": {"uid": "04A1B2C3"}},
+    "response": {"status": 409, "body": {"error": "card already enrolled"}}
+  },
+  {
+    "name": "players_list",
+    "setup": [
+      {"method": "POST", "path": "/api/players", "body": {"uid": "04000001", "name": "Ghost"}},
+      {"method": "POST", "path": "/api/players", "body": {"uid": "04000002"}}
+    ],
+    "request": {"method": "GET", "path": "/api/players"},
+    "response": {"status": 200, "body": {"players": [
+      {"no": 1, "uid": "04000001", "name": "Ghost", "team": "", "banned": false, "points": 0, "taps": 0, "accepted": 0},
+      {"no": 2, "uid": "04000002", "name": "Rider 2", "team": "", "banned": false, "points": 0, "taps": 0, "accepted": 0}
+    ]}}
+  },
+  {
+    "name": "patch_player",
+    "setup": [{"method": "POST", "path": "/api/players", "body": {"uid": "04000001"}}],
+    "request": {"method": "PATCH", "path": "/api/players/1", "body": {"name": "Pumpkin", "team": "Link", "banned": true}},
+    "response": {"status": 200, "body": {"no": 1, "name": "Pumpkin", "team": "Link", "banned": true, "points": 0}}
+  },
+  {
+    "name": "patch_player_bad_field",
+    "setup": [{"method": "POST", "path": "/api/players", "body": {"uid": "04000001"}}],
+    "request": {"method": "PATCH", "path": "/api/players/1", "body": {"colour": "orange"}},
+    "response": {"status": 400, "body": {"error": "unknown field: colour"}}
+  },
+  {
+    "name": "adjust_score",
+    "setup": [{"method": "POST", "path": "/api/players", "body": {"uid": "04000001"}}],
+    "request": {"method": "POST", "path": "/api/players/1/adjust", "body": {"delta": -3}},
+    "response": {"status": 200, "body": {"no": 1, "points": -3}}
+  }
+]

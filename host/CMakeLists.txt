@@ -29,7 +29,7 @@ add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 set(ORCA_COMPONENTS ${CMAKE_CURRENT_LIST_DIR}/../firmware/components)
 
 # ★ portable components
-foreach(comp nlohmann_json orca_hal game_core games)
+foreach(comp nlohmann_json orca_hal game_core games config api)
   add_subdirectory(${ORCA_COMPONENTS}/${comp} ${CMAKE_BINARY_DIR}/components/${comp})
 endforeach()
 
@@ -42,6 +42,9 @@ target_link_libraries(orca_fakes INTERFACE orca_hal nlohmann_json)
 enable_testing()
 file(GLOB ORCA_TEST_SOURCES CONFIGURE_DEPENDS tests/*_test.cpp)
 add_executable(orca_tests ${ORCA_TEST_SOURCES})
-target_link_libraries(orca_tests PRIVATE orca_fakes orca_games GTest::gtest_main GTest::gmock)
-include(GoogleTest)
-gtest_discover_tests(orca_tests DISCOVERY_TIMEOUT 30)
+target_include_directories(orca_tests PRIVATE sim)
+target_link_libraries(orca_tests PRIVATE orca_fakes orca_games orca_api GTest::gtest_main GTest::gmock)
+target_compile_definitions(orca_tests PRIVATE ORCA_API_FIXTURES_DIR="${CMAKE_CURRENT_LIST_DIR}/tests/api_fixtures")
+# One ctest entry; googletest itself reports each test. (gtest_discover_tests mis-parses
+# parameterized test listings and registers duplicates.)
+add_test(NAME orca_tests COMMAND orca_tests --gtest_brief=1)

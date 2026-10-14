@@ -21,12 +21,12 @@ class FarePaid : public Game {
   json save() const override;
   void restore(const json& j) override;
 
+  // Remaining cooldown for a player (0 if they may tap now).
+  TimeMs cooldown_left(int number, TimeMs now) const;
+
  protected:
   explicit FarePaid(GameInfo info);
   static ParamSchema base_params();
-
-  // Remaining cooldown for a player (0 if they may tap now).
-  TimeMs cooldown_left(int number, TimeMs now) const;
 
   GameInfo info_;
   json params_;

@@ -3,3 +3,5 @@ orca_hal
 game_core
 games
 nlohmann_json
+config
+api
