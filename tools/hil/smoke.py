@@ -41,20 +41,26 @@ def snap_async(name, delay=0.0):
 
 
 def screen_color(path):
-    """Classifies the middle of the frame (where the screen is) by hue."""
+    """Classifies the result icon (check / clock / X) above the middle of the screen by hue.
+
+    Screens are black like the real reader, so only strongly coloured pixels are averaged."""
     img = Image.open(path).convert("RGB")
     w, h = img.size
-    crop = img.crop((int(w * 0.35), int(h * 0.40), int(w * 0.55), int(h * 0.60))).resize((20, 20))
+    crop = img.crop((int(w * 0.30), int(h * 0.18), int(w * 0.60), int(h * 0.45))).resize((60, 54))
     raw = crop.tobytes()
-    n = len(raw) // 3
-    r = sum(raw[0::3]) / n / 255
-    g = sum(raw[1::3]) / n / 255
-    b = sum(raw[2::3]) / n / 255
+    vivid = []
+    for i in range(0, len(raw), 3):
+        hh, ss, vv = colorsys.rgb_to_hsv(raw[i] / 255, raw[i + 1] / 255, raw[i + 2] / 255)
+        if ss > 0.45 and vv > 0.30:
+            vivid.append((raw[i], raw[i + 1], raw[i + 2]))
+    if len(vivid) < 15:
+        return "dark", (0, 0, 0), 0
+    r = sum(p[0] for p in vivid) / len(vivid) / 255
+    g = sum(p[1] for p in vivid) / len(vivid) / 255
+    b = sum(p[2] for p in vivid) / len(vivid) / 255
     hue, sat, val = colorsys.rgb_to_hsv(r, g, b)
     hue *= 360
-    if val < 0.25 or sat < 0.25:
-        label = "dark"
-    elif hue < 18 or hue >= 330:
+    if hue < 10 or hue >= 330:  # the webcam shows amber as ~15-35 degrees under warm light
         label = "red"
     elif hue < 70:
         label = "yellow"  # amber (cooldown) or gold (bonus)
@@ -104,9 +110,9 @@ def main():
         s.check(status == 200, "select fare_paid")
         status, st = dev.api("POST", "/api/game/start")
         s.check(status == 200 and st["state"] == "running", "game running")
-        time.sleep(1.0)
+        time.sleep(5.0)  # stopping the previous game shows a 4 s banner
         color, rgb, hue = screen_color(snap("idle"))
-        s.check(color in ("dark", "blue"), f"idle screen {color} rgb{rgb} (want dark/blue)")
+        s.check(color == "blue", f"idle screen {color} rgb{rgb} (want blue: the orca swoosh)")
 
         print("taps")
         uid = "04%012X" % random.getrandbits(48)

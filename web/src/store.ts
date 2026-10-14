@@ -47,6 +47,8 @@ export function connectLive(url = defaultWsUrl()) {
     socket.onopen = async () => {
       connected.value = true;
       delay = 500;
+      // After a costume reboot its clock is unset; the operator's phone fixes that on reconnect.
+      if (api.loggedIn) api.syncClock().catch(() => {});
       try {
         // Await first: "hello" usually arrives while this request is in flight, and reading
         // live.value before the await would overwrite it with stale state.

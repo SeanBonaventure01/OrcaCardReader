@@ -1,28 +1,28 @@
-{"out":{"detail":"NOT IN SERVICE","headline":"Fare Paid","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":0}
+{"out":{"detail":"Not in service","headline":"Fare Paid","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":0}
 {"out":{"id":"start","out":"sound"},"t":0}
 {"out":{"duration_ms":0,"effect":"idle_breathe","out":"leds"},"t":0}
-{"out":{"detail":"TAP CARD HERE","headline":"Fare Paid","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":0}
+{"out":{"detail":"","headline":"Fare Paid","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":0}
 {"out":{"id":"accept","out":"sound"},"t":0}
 {"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":0}
-{"out":{"detail":"+2 pts · Balance 2","headline":"FARE PAID","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#01 Ghost","tone":"success"},"t":0}
-{"result":{"balance":2,"detail":"+2 pts · Balance 2","headline":"FARE PAID","multiplier":1.0,"name":"Ghost","outcome":"accepted","player":1,"points":2,"seq":1,"t":0,"uid":"04000000000001"},"t":0,"tap":"Ghost"}
+{"out":{"detail":"+2 pts · Balance 2","headline":"Good for 1:00","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#01 Ghost","tone":"success"},"t":0}
+{"result":{"balance":2,"detail":"+2 pts · Balance 2","headline":"Good for 1:00","multiplier":1.0,"name":"Ghost","outcome":"accepted","player":1,"points":2,"seq":1,"t":0,"uid":"04000000000001"},"t":0,"tap":"Ghost"}
 {"out":{"id":"reject","out":"sound"},"t":59999}
 {"out":{"duration_ms":2500,"effect":"cooldown_pulse","out":"leds"},"t":59999}
-{"out":{"detail":"Next fare in 0:01","headline":"TRANSFER","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#01 Ghost","tone":"warning"},"t":59999}
-{"result":{"balance":2,"detail":"Next fare in 0:01","headline":"TRANSFER","multiplier":1.0,"name":"Ghost","outcome":"cooldown","player":1,"points":0,"seq":2,"t":59999,"uid":"04000000000001"},"t":59999,"tap":"Ghost"}
+{"out":{"detail":"Next fare in 0:01","headline":"Transfer","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#01 Ghost","tone":"warning"},"t":59999}
+{"result":{"balance":2,"detail":"Next fare in 0:01","headline":"Transfer","multiplier":1.0,"name":"Ghost","outcome":"cooldown","player":1,"points":0,"seq":2,"t":59999,"uid":"04000000000001"},"t":59999,"tap":"Ghost"}
 {"expect":{"outcome":"cooldown"},"ok":true,"t":59999}
 {"out":{"id":"accept","out":"sound"},"t":60000}
 {"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":60000}
-{"out":{"detail":"+2 pts · Balance 4","headline":"FARE PAID","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#01 Ghost","tone":"success"},"t":60000}
-{"result":{"balance":4,"detail":"+2 pts · Balance 4","headline":"FARE PAID","multiplier":1.0,"name":"Ghost","outcome":"accepted","player":1,"points":2,"seq":3,"t":60000,"uid":"04000000000001"},"t":60000,"tap":"Ghost"}
+{"out":{"detail":"+2 pts · Balance 4","headline":"Good for 1:00","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#01 Ghost","tone":"success"},"t":60000}
+{"result":{"balance":4,"detail":"+2 pts · Balance 4","headline":"Good for 1:00","multiplier":1.0,"name":"Ghost","outcome":"accepted","player":1,"points":2,"seq":3,"t":60000,"uid":"04000000000001"},"t":60000,"tap":"Ghost"}
 {"expect":{"outcome":"accepted"},"ok":true,"t":60000}
 {"out":{"id":"reject","out":"sound"},"t":60000}
 {"out":{"duration_ms":2500,"effect":"cooldown_pulse","out":"leds"},"t":60000}
-{"out":{"detail":"Next fare in 1:00","headline":"TRANSFER","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#01 Ghost","tone":"warning"},"t":60000}
-{"result":{"balance":4,"detail":"Next fare in 1:00","headline":"TRANSFER","multiplier":1.0,"name":"Ghost","outcome":"cooldown","player":1,"points":0,"seq":4,"t":60000,"uid":"04000000000001"},"t":60000,"tap":"Ghost"}
+{"out":{"detail":"Next fare in 1:00","headline":"Transfer","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#01 Ghost","tone":"warning"},"t":60000}
+{"result":{"balance":4,"detail":"Next fare in 1:00","headline":"Transfer","multiplier":1.0,"name":"Ghost","outcome":"cooldown","player":1,"points":0,"seq":4,"t":60000,"uid":"04000000000001"},"t":60000,"tap":"Ghost"}
 {"expect":{"outcome":"cooldown"},"ok":true,"t":60000}
 {"out":{"id":"accept","out":"sound"},"t":120000}
 {"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":120000}
-{"out":{"detail":"+2 pts · Balance 6","headline":"FARE PAID","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#01 Ghost","tone":"success"},"t":120000}
-{"result":{"balance":6,"detail":"+2 pts · Balance 6","headline":"FARE PAID","multiplier":1.0,"name":"Ghost","outcome":"accepted","player":1,"points":2,"seq":5,"t":120000,"uid":"04000000000001"},"t":120000,"tap":"Ghost"}
+{"out":{"detail":"+2 pts · Balance 6","headline":"Good for 1:00","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#01 Ghost","tone":"success"},"t":120000}
+{"result":{"balance":6,"detail":"+2 pts · Balance 6","headline":"Good for 1:00","multiplier":1.0,"name":"Ghost","outcome":"accepted","player":1,"points":2,"seq":5,"t":120000,"uid":"04000000000001"},"t":120000,"tap":"Ghost"}
 {"expect":{"outcome":"accepted","score":{"Ghost":6}},"ok":true,"t":120000}

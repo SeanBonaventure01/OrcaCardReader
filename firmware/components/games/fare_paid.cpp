@@ -45,6 +45,7 @@ Feedback FarePaid::fare(GameContext& ctx, Player& player) {
   last_accepted_[player.number] = ctx.now;
   fb.outcome = Outcome::Accepted;
   fb.points = points_;
+  if (cooldown_ > 0) fb.valid_until = ctx.now + cooldown_;
   return fb;
 }
 
@@ -82,7 +83,7 @@ void RushHour::configure(const json& params) {
   schedule_.multiplier = params.at("multiplier").get<double>();
   schedule_.jitter = 0.5;
   schedule_.kind = EventKind::Multiplier;
-  schedule_.name = "RUSH HOUR";
+  schedule_.name = "Rush hour";
 }
 
 void RushHour::start(GameContext& ctx) { ctx.events.configure_random(schedule_, ctx.now, ctx.rng); }

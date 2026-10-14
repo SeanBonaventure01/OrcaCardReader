@@ -153,7 +153,7 @@ void EventScheduler::restore(const json& j) {
   schedule_.jitter = s.value("jitter", 0.5);
   schedule_.kind = event_kind_from_string(s.value("kind", "multiplier")).value_or(EventKind::Multiplier);
   schedule_.multiplier = s.value("multiplier", 2.0);
-  schedule_.name = s.value("name", "RUSH HOUR");
+  schedule_.name = s.value("name", "Rush hour");
   schedule_.tag = s.value("tag", "");
 }
 

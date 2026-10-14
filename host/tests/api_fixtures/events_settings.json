@@ -5,19 +5,19 @@
       {"method": "POST", "path": "/api/game/select", "body": {"id": "fare_paid"}},
       {"method": "POST", "path": "/api/game/start"}
     ],
-    "request": {"method": "POST", "path": "/api/events/trigger", "body": {"name": "RUSH HOUR", "duration_ms": 120000, "multiplier": 3}},
-    "response": {"status": 200, "body": {"id": 1, "kind": "multiplier", "name": "RUSH HOUR", "multiplier": 3.0, "start": 1000, "end": 121000, "random": false}}
+    "request": {"method": "POST", "path": "/api/events/trigger", "body": {"name": "Rush hour", "duration_ms": 120000, "multiplier": 3}},
+    "response": {"status": 200, "body": {"id": 1, "kind": "multiplier", "name": "Rush hour", "multiplier": 3.0, "start": 1000, "end": 121000, "random": false}}
   },
   {
     "name": "status_during_event",
     "setup": [
       {"method": "POST", "path": "/api/game/select", "body": {"id": "fare_paid"}},
       {"method": "POST", "path": "/api/game/start"},
-      {"method": "POST", "path": "/api/events/trigger", "body": {"kind": "cooldown_waiver", "name": "FREE RIDE", "duration_ms": 60000}}
+      {"method": "POST", "path": "/api/events/trigger", "body": {"kind": "cooldown_waiver", "name": "Free ride", "duration_ms": 60000}}
     ],
     "request": {"method": "GET", "path": "/api/status", "auth": false},
     "response": {"status": 200, "body": {"state": "running", "events": [
-      {"kind": "cooldown_waiver", "name": "FREE RIDE", "remaining_ms": 60000, "multiplier": 1.0}
+      {"kind": "cooldown_waiver", "name": "Free ride", "remaining_ms": 60000, "multiplier": 1.0}
     ]}}
   },
   {

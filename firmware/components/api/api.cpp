@@ -232,10 +232,11 @@ Api::Api(EngineGateway& gateway, SettingsStore& settings, const hal::Clock& cloc
                          }));
   });
   add("POST", "/api/clock", true, [this](Ctx& c) {
-    only_keys(c.body, {"epoch_ms"});
+    only_keys(c.body, {"epoch_ms", "utc_offset_min"});
     const auto epoch = req_int(c.body, "epoch_ms");
+    const auto offset = c.body.contains("utc_offset_min") ? req_int(c.body, "utc_offset_min") : 0;
     engine([&](E& e) {
-      e.sync_wall_clock(epoch);
+      e.sync_wall_clock(epoch, static_cast<int>(offset));
       return json();
     });
     return json_response(200, json{{"ok", true}});

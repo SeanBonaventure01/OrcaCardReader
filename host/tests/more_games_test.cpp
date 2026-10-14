@@ -35,7 +35,7 @@ TEST_F(TeamLinesTest, ScreenShowsTeamTotal) {
   engine.update_player(2, {{"team", "Red"}});
   tap("A");
   auto r = tap("B");
-  EXPECT_EQ(r.detail, "Red +1 - Team total 2");
+  EXPECT_EQ(r.detail, "Red +1 pt · Team total 2");
   EXPECT_EQ(engine.board_json(10)["teams"][0]["points"], 2);
 }
 
@@ -44,8 +44,8 @@ TEST_F(TeamLinesTest, NoAutoAssignKeepsRidersTeamless) {
   start("team_lines", {{"teams", "Red,Blue"}, {"auto_assign", false}});
   auto r = tap("A");
   EXPECT_EQ(engine.players().find(1)->team, "");
-  EXPECT_EQ(r.headline, "FARE PAID");
-  EXPECT_EQ(r.detail, "+1 pts · Balance 1");  // falls back to the normal detail
+  EXPECT_EQ(r.headline, "Good for 5:00");
+  EXPECT_EQ(r.detail, "+1 pt · Balance 1");  // falls back to the normal detail
 }
 
 TEST_F(TeamLinesTest, TeamListValidation) {
@@ -68,7 +68,7 @@ class LastStopTest : public GameHarness {
 TEST_F(LastStopTest, HolderEarnsPointsEachInterval) {
   start("last_stop", {{"interval", seconds(30)}, {"points", 2}});
   auto r = tap("A");
-  EXPECT_EQ(r.headline, "ALL ABOARD");
+  EXPECT_EQ(r.headline, "All aboard");
   EXPECT_EQ(r.points, 0);
   advance(seconds(29));
   EXPECT_EQ(points("A"), 0);
@@ -93,13 +93,13 @@ TEST_F(LastStopTest, AnotherRiderTakesTheBus) {
 TEST_F(LastStopTest, HolderTappingAgainIsRejectedAndCooldownStopsTapWars) {
   start("last_stop", {{"interval", seconds(30)}, {"cooldown", minutes(1)}});
   tap("A");
-  EXPECT_EQ(tap("A").headline, "STILL ON THE BUS");
+  EXPECT_EQ(tap("A").headline, "Still on the bus");
   tap("B");
   auto r = tap("A");  // A tapped 0 s ago
   EXPECT_EQ(r.outcome, Outcome::Cooldown);
   EXPECT_EQ(r.detail, "Next boarding in 1:00");
   advance(minutes(1));
-  EXPECT_EQ(tap("A").headline, "ALL ABOARD");
+  EXPECT_EQ(tap("A").headline, "All aboard");
 }
 
 TEST_F(LastStopTest, RushHourDoublesRideAwards) {
@@ -128,7 +128,7 @@ class FareInspectorTest : public GameHarness {
     add_player("C");
   }
   void inspect(orca::game::TimeMs length = minutes(1)) {
-    engine.trigger_event(EventKind::Custom, "FARE INSPECTION", length, 1);
+    engine.trigger_event(EventKind::Custom, "Fare inspection", length, 1);
   }
 };
 
@@ -145,7 +145,7 @@ TEST_F(FareInspectorTest, EvadersAreFinedWhenInspectionEnds) {
   EXPECT_EQ(points("B"), 2);      // checked (and the tap was a new fare)
   EXPECT_EQ(points("C"), 1);      // recent fare
   bool over = false;
-  for (const auto& e : out.log) over |= e.value("headline", "") == "INSPECTION OVER" && e.value("detail", "") == "1 rider fined 3 pts";
+  for (const auto& e : out.log) over |= e.value("headline", "") == "Inspection over" && e.value("detail", "") == "1 rider fined 3 pts";
   EXPECT_TRUE(over);
 }
 
@@ -224,7 +224,7 @@ TEST_F(LotteryTest, DrawsWeightedWinnersWithoutRepeats) {
   EXPECT_EQ(first["pool"], 9);
   EXPECT_THROW(engine.game_action("draw", json::object()), EngineError);  // only C left, no tickets
   EXPECT_EQ(engine.status_json()["game"]["status"]["winners"].size(), 2u);
-  EXPECT_EQ(out.last_screen.headline, "WINNER!");
+  EXPECT_EQ(out.last_screen.headline, "Winner!");
 }
 
 TEST_F(LotteryTest, HeavyTicketHoldersWinMoreOften) {

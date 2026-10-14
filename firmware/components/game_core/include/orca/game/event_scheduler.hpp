@@ -43,7 +43,7 @@ struct RandomSchedule {
   double jitter = 0.5;
   EventKind kind = EventKind::Multiplier;
   double multiplier = 2.0;
-  std::string name = "RUSH HOUR";
+  std::string name = "Rush hour";
   std::string tag;
 };
 

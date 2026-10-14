@@ -1,32 +1,32 @@
-{"out":{"detail":"NOT IN SERVICE","headline":"Fare Inspector","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":0}
+{"out":{"detail":"Not in service","headline":"Fare Inspector","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":0}
 {"out":{"id":"start","out":"sound"},"t":0}
 {"out":{"duration_ms":0,"effect":"idle_breathe","out":"leds"},"t":0}
-{"out":{"detail":"TAP CARD HERE","headline":"Fare Inspector","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":0}
+{"out":{"detail":"","headline":"Fare Inspector","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":0}
 {"out":{"id":"accept","out":"sound"},"t":0}
 {"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":0}
-{"out":{"detail":"+1 pts · Balance 1","headline":"FARE PAID","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#01 Ghost","tone":"success"},"t":0}
-{"result":{"balance":1,"detail":"+1 pts · Balance 1","headline":"FARE PAID","multiplier":1.0,"name":"Ghost","outcome":"accepted","player":1,"points":1,"seq":1,"t":0,"uid":"04000000000001"},"t":0,"tap":"Ghost"}
+{"out":{"detail":"+1 pt · Balance 1","headline":"Good for 5:00","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#01 Ghost","tone":"success"},"t":0}
+{"result":{"balance":1,"detail":"+1 pt · Balance 1","headline":"Good for 5:00","multiplier":1.0,"name":"Ghost","outcome":"accepted","player":1,"points":1,"seq":1,"t":0,"uid":"04000000000001"},"t":0,"tap":"Ghost"}
 {"out":{"id":"accept","out":"sound"},"t":0}
 {"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":0}
-{"out":{"detail":"+1 pts · Balance 1","headline":"FARE PAID","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#02 Witch","tone":"success"},"t":0}
-{"result":{"balance":1,"detail":"+1 pts · Balance 1","headline":"FARE PAID","multiplier":1.0,"name":"Witch","outcome":"accepted","player":2,"points":1,"seq":2,"t":0,"uid":"04000000000002"},"t":0,"tap":"Witch"}
+{"out":{"detail":"+1 pt · Balance 1","headline":"Good for 5:00","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#02 Witch","tone":"success"},"t":0}
+{"result":{"balance":1,"detail":"+1 pt · Balance 1","headline":"Good for 5:00","multiplier":1.0,"name":"Witch","outcome":"accepted","player":2,"points":1,"seq":2,"t":0,"uid":"04000000000002"},"t":0,"tap":"Witch"}
 {"out":{"id":"accept","out":"sound"},"t":300000}
 {"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":300000}
-{"out":{"detail":"+1 pts · Balance 1","headline":"FARE PAID","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#03 Bat","tone":"success"},"t":300000}
-{"result":{"balance":1,"detail":"+1 pts · Balance 1","headline":"FARE PAID","multiplier":1.0,"name":"Bat","outcome":"accepted","player":3,"points":1,"seq":3,"t":300000,"uid":"04000000000003"},"t":300000,"tap":"Bat"}
+{"out":{"detail":"+1 pt · Balance 1","headline":"Good for 5:00","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#03 Bat","tone":"success"},"t":300000}
+{"result":{"balance":1,"detail":"+1 pt · Balance 1","headline":"Good for 5:00","multiplier":1.0,"name":"Bat","outcome":"accepted","player":3,"points":1,"seq":3,"t":300000,"uid":"04000000000003"},"t":300000,"tap":"Bat"}
 {"out":{"id":"event_start","out":"sound"},"t":330000}
 {"out":{"duration_ms":4000,"effect":"event_strobe","out":"leds"},"t":330000}
-{"out":{"detail":"Tap your card to show your ticket!","headline":"FARE INSPECTION","hold_ms":4000,"kind":"banner","note":"","out":"screen","player":"","tone":"warning"},"t":330000}
-{"out":{"detail":"TAP CARD HERE","headline":"Fare Inspector","hold_ms":0,"kind":"idle","note":"FARE INSPECTION","out":"screen","player":"","tone":"neutral"},"t":330000}
+{"out":{"detail":"Tap your card to show your ticket!","headline":"Fare inspection","hold_ms":4000,"kind":"banner","note":"","out":"screen","player":"","tone":"warning"},"t":330000}
+{"out":{"detail":"","headline":"Fare Inspector","hold_ms":0,"kind":"idle","note":"FARE INSPECTION","out":"screen","player":"","tone":"neutral"},"t":330000}
 {"api":["POST","/api/events/trigger"],"status":200,"t":330000}
 {"out":{"id":"accept","out":"sound"},"t":360000}
 {"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":360000}
-{"out":{"detail":"+1 pts · Balance 2","headline":"TICKET CHECKED","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#02 Witch","tone":"success"},"t":360000}
-{"result":{"balance":2,"detail":"+1 pts · Balance 2","headline":"TICKET CHECKED","multiplier":1.0,"name":"Witch","outcome":"accepted","player":2,"points":1,"seq":4,"t":360000,"uid":"04000000000002"},"t":360000,"tap":"Witch"}
+{"out":{"detail":"+1 pt · Balance 2","headline":"Ticket checked","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#02 Witch","tone":"success"},"t":360000}
+{"result":{"balance":2,"detail":"+1 pt · Balance 2","headline":"Ticket checked","multiplier":1.0,"name":"Witch","outcome":"accepted","player":2,"points":1,"seq":4,"t":360000,"uid":"04000000000002"},"t":360000,"tap":"Witch"}
 {"expect":{"outcome":"accepted"},"ok":true,"t":360000}
 {"out":{"id":"event_end","out":"sound"},"t":391000}
-{"out":{"detail":"1 rider fined 3 pts","headline":"INSPECTION OVER","hold_ms":4000,"kind":"banner","note":"","out":"screen","player":"","tone":"neutral"},"t":391000}
+{"out":{"detail":"1 rider fined 3 pts","headline":"Inspection over","hold_ms":4000,"kind":"banner","note":"","out":"screen","player":"","tone":"neutral"},"t":391000}
 {"out":{"id":"event_end","out":"sound"},"t":391000}
 {"out":{"duration_ms":0,"effect":"idle_breathe","out":"leds"},"t":391000}
-{"out":{"detail":"TAP CARD HERE","headline":"Fare Inspector","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":391000}
+{"out":{"detail":"","headline":"Fare Inspector","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":391000}
 {"expect":{"events_active":0,"score":{"Bat":1,"Ghost":-2,"Witch":2}},"ok":true,"t":391000}

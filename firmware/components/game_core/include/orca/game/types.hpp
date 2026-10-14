@@ -25,10 +25,13 @@ enum class Outcome {
 const char* to_string(Outcome o);
 
 // What a game wants to happen for a tap. Empty strings and zeros fall back to the theme.
-// headline/detail support placeholders: {points} {balance} {name} {no} {mult}
+// headline/detail support placeholders: {points} {points_text} ("1 pt"/"3 pts") {balance}
+// {name} {no} {mult} {team} {team_total} {until} ("until 1:07 pm", or "for 4:59" before the
+// phone has synced the clock)
 struct Feedback {
   Outcome outcome = Outcome::Rejected;
   int points = 0;  // base points before multipliers (may be negative)
+  TimeMs valid_until = -1;  // game time the fare stays good until (Fare Paid family); -1 = n/a
   bool apply_multiplier = true;
   std::string headline;
   std::string detail;

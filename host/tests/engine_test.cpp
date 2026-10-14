@@ -25,7 +25,7 @@ TEST_F(EngineTest, StartsWithNoGameAndRejectsTapsAsClosed) {
   add_player("Ghost");
   auto r = tap("Ghost");
   EXPECT_EQ(r.outcome, Outcome::Closed);
-  EXPECT_EQ(r.headline, "NOT IN SERVICE");
+  EXPECT_EQ(r.headline, "Not in service");
   EXPECT_EQ(points("Ghost"), 0);
   EXPECT_EQ(engine.scores().stats(1).taps, 0);  // closed taps aren't counted
 }
@@ -87,7 +87,7 @@ TEST_F(EngineTest, ClosedEnrollmentRejectsUnknownCards) {
   start("fare_paid");
   auto r = engine.tap("04AABBCCDDEEFF");
   EXPECT_EQ(r.outcome, Outcome::Unknown);
-  EXPECT_EQ(r.headline, "CARD NOT RECOGNIZED");
+  EXPECT_EQ(r.headline, "Card not recognized");
   EXPECT_EQ(engine.players().size(), 0u);
 }
 
@@ -110,7 +110,7 @@ TEST_F(EngineTest, BannedPlayerIsRejectedWithoutPoints) {
   engine.update_player(p.number, {{"banned", true}});
   auto r = tap("Ghost");
   EXPECT_EQ(r.outcome, Outcome::Banned);
-  EXPECT_EQ(r.headline, "SEE CUSTOMER SERVICE");
+  EXPECT_EQ(r.headline, "See customer service");
   EXPECT_EQ(points("Ghost"), 0);
 }
 
@@ -158,19 +158,19 @@ TEST_F(EngineTest, TemplatesAreFilled) {
   add_player("Ghost");
   start("fare_paid", {{"points", 3}});
   auto r = tap("Ghost");
-  EXPECT_EQ(r.headline, "FARE PAID");
+  EXPECT_EQ(r.headline, "Good for 5:00");  // clock not synced yet: relative time
   EXPECT_EQ(r.detail, "+3 pts · Balance 3");
 }
 
 TEST_F(EngineTest, MultiplierUpgradesToBonus) {
   add_player("Ghost");
   start("fare_paid", {{"points", 3}});
-  engine.trigger_event(EventKind::Multiplier, "RUSH HOUR", minutes(1), 2);
+  engine.trigger_event(EventKind::Multiplier, "Rush hour", minutes(1), 2);
   auto r = tap("Ghost");
   EXPECT_EQ(r.outcome, Outcome::Bonus);
   EXPECT_EQ(r.points, 6);
-  EXPECT_EQ(r.headline, "BONUS FARE");
-  EXPECT_EQ(r.detail, "+6 pts (2x) · Balance 6");
+  EXPECT_EQ(r.headline, "Good for 5:00");
+  EXPECT_EQ(r.detail, "+6 pts (2x bonus) · Balance 6");
   EXPECT_EQ(out.last_screen.tone, orca::hal::Tone::Bonus);
 }
 
@@ -184,10 +184,10 @@ TEST_F(EngineTest, FractionalMultiplierRounds) {
 TEST_F(EngineTest, TriggerEventAnnouncesAndEnds) {
   start("fare_paid");
   out.clear();
-  engine.trigger_event(EventKind::Multiplier, "RUSH HOUR", seconds(30), 2);
+  engine.trigger_event(EventKind::Multiplier, "Rush hour", seconds(30), 2);
   EXPECT_EQ(out.sounds.front(), "event_start");
   bool banner = false;
-  for (const auto& e : out.log) banner |= e.value("out", "") == "screen" && e.value("kind", "") == "banner" && e.value("headline", "") == "RUSH HOUR";
+  for (const auto& e : out.log) banner |= e.value("out", "") == "screen" && e.value("kind", "") == "banner" && e.value("headline", "") == "Rush hour";
   EXPECT_TRUE(banner);
   EXPECT_EQ(count_messages("event"), 1);
   advance(seconds(30));
@@ -272,6 +272,43 @@ TEST_F(EngineTest, ChangeCountMovesOnStateChanges) {
   EXPECT_EQ(engine.change_count(), c);
 }
 
+TEST_F(EngineTest, GoodUntilUsesLocalWallClockLikeTheRealReader) {
+  add_player("Ghost");
+  start("fare_paid");  // 5 min cooldown
+  // 2026-10-31 20:02:00 UTC; PDT is UTC-7 -> 1:02 pm local.
+  engine.sync_wall_clock(1'793'476'920'000, -420);
+  EXPECT_EQ(tap("Ghost").headline, "Good until 1:07 pm");
+  EXPECT_EQ(engine.status_json()["utc_offset_min"], -420);
+}
+
+TEST_F(EngineTest, GoodUntilFormatsMidnightAndNoon) {
+  add_player("A");
+  add_player("B");
+  start("fare_paid", {{"cooldown", minutes(1)}});
+  engine.sync_wall_clock(1'793'491'140'000, 0);  // 23:59:00 UTC -> fare good until 12:00 am
+  EXPECT_EQ(tap("A").headline, "Good until 12:00 am");
+  engine.sync_wall_clock(1'793'447'940'000, 0);  // 11:59:00 UTC -> 12:00 pm
+  EXPECT_EQ(tap("B").headline, "Good until 12:00 pm");
+  EXPECT_THROW(engine.sync_wall_clock(1'793'447'940'000, 15 * 60), EngineError);
+}
+
+TEST_F(EngineTest, NoCooldownMeansPlainFarePaid) {
+  add_player("Ghost");
+  start("fare_paid", {{"cooldown", 0}, {"points", 1}});
+  auto r = tap("Ghost");
+  EXPECT_EQ(r.headline, "Fare paid");
+  EXPECT_EQ(r.detail, "+1 pt · Balance 1");
+}
+
+TEST_F(EngineTest, IdleDetailOnlyWhenNotTakingFares) {
+  engine.select_game("fare_paid", json::object());
+  EXPECT_EQ(out.last_screen.detail, "Not in service");
+  engine.start();
+  EXPECT_EQ(out.last_screen.detail, "");
+  engine.pause();
+  EXPECT_EQ(out.last_screen.detail, "Paused");
+}
+
 TEST_F(EngineTest, WallClockSync) {
   EXPECT_FALSE(engine.wall_clock_ms());
   EXPECT_EQ(status_of([&] { engine.sync_wall_clock(12345); }), 400);
@@ -326,7 +363,7 @@ TEST_F(EngineTest, SnapshotRestoreRoundTrip) {
   EXPECT_EQ(r.outcome, Outcome::Cooldown);
   EXPECT_EQ(r.detail, "Next fare in 3:00");
   bool restored_banner = false;
-  for (const auto& e : out2.log) restored_banner |= e.value("headline", "") == "SERVICE RESTORED";
+  for (const auto& e : out2.log) restored_banner |= e.value("headline", "") == "Service restored";
   EXPECT_TRUE(restored_banner);
 }
 

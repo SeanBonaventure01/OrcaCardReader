@@ -61,29 +61,29 @@ test('load and start Fare Paid with a custom cooldown', async () => {
 test('a simulated tap shows in the feed, leaderboard and costume preview', async () => {
   await page.getByTestId('sim-tap').click();
   const first = page.getByTestId('feed-item').first();
-  await expect(first).toContainText('FARE PAID');
+  await expect(first).toContainText(/Good until \d+:\d\d [ap]m/);  // clock synced at login
   await expect(first).toContainText('#1 Rider 1');
   await expect(page.getByTestId('leaderboard')).toContainText('Rider 1');
-  await expect(page.getByTestId('device-screen')).toContainText('FARE PAID');
+  await expect(page.getByTestId('device-screen')).toContainText(/Good until/);
   await expect(page.getByTestId('game-card')).toContainText('1 riders');
 });
 
 test('tapping again during the cooldown is a transfer', async () => {
   await page.getByLabel('Card to tap').selectOption({ label: '#1 Rider 1' });
   await page.getByTestId('sim-tap').click();
-  await expect(page.getByTestId('feed-item').first()).toContainText('TRANSFER');
+  await expect(page.getByTestId('feed-item').first()).toContainText('Transfer');
   await expect(page.getByTestId('device-screen')).toContainText('Next fare in');
 });
 
 test('rush hour doubles points', async () => {
   await page.getByTestId('quick-rush').click();
-  await expect(page.getByTestId('event-badge').first()).toContainText('RUSH HOUR 2x');
-  await expect(page.getByTestId('announcement')).toContainText('RUSH HOUR');
+  await expect(page.getByTestId('event-badge').first()).toContainText('Rush hour 2x');
+  await expect(page.getByTestId('announcement')).toContainText('Rush hour');
   // 20 s game-time cooldown = 1 s real time at 20x.
   await page.waitForTimeout(1500);
   await page.getByTestId('sim-tap').click();
   const first = page.getByTestId('feed-item').first();
-  await expect(first).toContainText('BONUS FARE');
+  await expect(first).toContainText(/Good until/);
   await expect(first).toContainText('+2 (2x)');
 });
 
@@ -117,7 +117,7 @@ test('closing enrollment rejects unknown cards', async () => {
   await tab('live');
   await page.getByLabel('Card to tap').selectOption('new');
   await page.getByTestId('sim-tap').click();
-  await expect(page.getByTestId('feed-item').first()).toContainText('CARD NOT RECOGNIZED');
+  await expect(page.getByTestId('feed-item').first()).toContainText('Card not recognized');
   await tab('settings');
   await page.getByTestId('open-enrollment').check();
 });
@@ -125,16 +125,16 @@ test('closing enrollment rejects unknown cards', async () => {
 test('custom event from the Events page', async () => {
   await tab('events');
   await page.getByRole('combobox').first().selectOption('cooldown_waiver');
-  await page.getByLabel('Name shown on the costume').fill('FREE RIDE');
+  await page.getByLabel('Name shown on the costume').fill('Free ride');
   await page.getByTestId('trigger-event').click();
-  await expect(page.getByTestId('active-events')).toContainText('FREE RIDE');
+  await expect(page.getByTestId('active-events')).toContainText('Free ride');
 });
 
 test('stop ends the game and announces the winner', async () => {
   await tab('live');
   await page.getByTestId('action-stop').click();
   await expect(page.getByTestId('game-state')).toHaveText('Ended');
-  await expect(page.getByTestId('announcement')).toContainText('END OF THE LINE');
+  await expect(page.getByTestId('announcement')).toContainText('End of the line');
   await expect(page.getByTestId('announcement')).toContainText('Winner: Ghost');
   await expect(page.getByTestId('action-reset')).toBeVisible();
 });

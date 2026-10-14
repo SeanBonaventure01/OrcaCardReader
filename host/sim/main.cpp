@@ -171,7 +171,7 @@ int cmd_repl(int argc, char** argv) {
     } else if (cmd == "event") {
       call("POST", "/api/events/trigger", {{"multiplier", std::atof(a.c_str())}, {"duration_ms", game::parse_duration(b)}});
     } else if (cmd == "waiver") {
-      call("POST", "/api/events/trigger", {{"kind", "cooldown_waiver"}, {"name", "FREE RIDE"}, {"duration_ms", game::parse_duration(a)}});
+      call("POST", "/api/events/trigger", {{"kind", "cooldown_waiver"}, {"name", "Free ride"}, {"duration_ms", game::parse_duration(a)}});
     } else if (cmd == "endevents") {
       call("POST", "/api/events/end");
     } else if (cmd == "save") {

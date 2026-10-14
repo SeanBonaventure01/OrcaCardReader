@@ -123,7 +123,9 @@ export class ApiClient {
   endEvents = () => this.request<Status>('POST', '/api/events/end');
   simTap = (target: { uid: string } | { player: number }) => this.request<TapRecord>('POST', '/api/sim/tap', target);
   setEnrollment = (open: boolean) => this.request<Status>('POST', '/api/enrollment', { open });
-  syncClock = (epochMs = Date.now()) => this.request('POST', '/api/clock', { epoch_ms: epochMs });
+  // The costume has no real-time clock; the phone tells it the time and its time zone.
+  syncClock = (epochMs = Date.now(), utcOffsetMin = -new Date(epochMs).getTimezoneOffset()) =>
+    this.request('POST', '/api/clock', { epoch_ms: epochMs, utc_offset_min: utcOffsetMin });
   playSound = (id: string) => this.request('POST', '/api/fx/sound', { id });
   settings = () => this.request<Settings>('GET', '/api/settings');
   patchSettings = (patch: Partial<Settings>) => this.request<Settings>('PATCH', '/api/settings', patch);

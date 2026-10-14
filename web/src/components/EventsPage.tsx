@@ -10,7 +10,7 @@ const SOUNDS = ['accept', 'reject', 'bonus', 'start', 'end', 'event_start', 'eve
 
 export function EventsPage() {
   const [kind, setKind] = useState<EventKind>('multiplier');
-  const [name, setName] = useState('RUSH HOUR');
+  const [name, setName] = useState('Rush hour');
   const [minutes, setMinutes] = useState('2');
   const [seconds, setSeconds] = useState('0');
   const [mult, setMult] = useState('2');

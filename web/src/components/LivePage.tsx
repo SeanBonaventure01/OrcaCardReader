@@ -110,15 +110,15 @@ function QuickEvents() {
   return (
     <Card title="Quick events">
       <div class="row">
-        <button disabled={!running} data-testid="quick-rush" onClick={() => trigger({ name: 'RUSH HOUR', duration_ms: 120000, multiplier: 2 }, 'Rush hour')}>
+        <button disabled={!running} data-testid="quick-rush" onClick={() => trigger({ name: 'Rush hour', duration_ms: 120000, multiplier: 2 }, 'Rush hour')}>
           Rush hour 2x · 2 min
         </button>
-        <button disabled={!running} onClick={() => trigger({ name: 'SURGE', duration_ms: 60000, multiplier: 3 }, 'Surge')}>
+        <button disabled={!running} onClick={() => trigger({ name: 'Surge', duration_ms: 60000, multiplier: 3 }, 'Surge')}>
           Surge 3x · 1 min
         </button>
         <button
           disabled={!running}
-          onClick={() => trigger({ kind: 'cooldown_waiver', name: 'FREE RIDE', duration_ms: 60000 }, 'Free ride')}
+          onClick={() => trigger({ kind: 'cooldown_waiver', name: 'Free ride', duration_ms: 60000 }, 'Free ride')}
         >
           Free ride · 1 min
         </button>

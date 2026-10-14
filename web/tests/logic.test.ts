@@ -161,12 +161,12 @@ describe('live reducer', () => {
     expect(s.board.board).toHaveLength(2);
     s = reduceLive(s, { type: 'players' });
     expect(s.playersVersion).toBe(1);
-    s = reduceLive(s, { type: 'announce', headline: 'RUSH HOUR', detail: '2x' }, 42);
-    expect(s.announcement).toEqual({ headline: 'RUSH HOUR', detail: '2x', at: 42 });
-    s = reduceLive(s, { type: 'device', out: 'screen', headline: 'FARE PAID', tone: 'success' });
+    s = reduceLive(s, { type: 'announce', headline: 'Rush hour', detail: '2x' }, 42);
+    expect(s.announcement).toEqual({ headline: 'Rush hour', detail: '2x', at: 42 });
+    s = reduceLive(s, { type: 'device', out: 'screen', headline: 'Fare paid', tone: 'success' });
     s = reduceLive(s, { type: 'device', out: 'leds', effect: 'accept_flash' });
     s = reduceLive(s, { type: 'device', out: 'sound', id: 'accept' });
     expect(s.device).toMatchObject({ seen: true, leds: 'accept_flash', sound: 'accept' });
-    expect(s.device.screen?.headline).toBe('FARE PAID');
+    expect(s.device.screen?.headline).toBe('Fare paid');
   });
 });

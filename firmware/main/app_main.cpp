@@ -87,6 +87,15 @@ config::DeviceConfig load_config() {
   return r.config;
 }
 
+// The status bar clock follows the engine's wall clock (set from the phone).
+void update_clock(const json& msg) {
+  const std::string type = msg.value("type", "");
+  if (type != "state" && type != "hello") return;
+  const json& st = msg["status"];
+  if (st.contains("wall_clock_ms") && st["wall_clock_ms"].is_number())
+    display::set_wall_clock(st["wall_clock_ms"].get<std::int64_t>(), st.value("utc_offset_min", 0));
+}
+
 void update_idle_board(const json& msg) {
   const json* board = nullptr;
   if (msg.value("type", "") == "scores") board = &msg;
@@ -116,7 +125,7 @@ extern "C" void app_main(void) {
   ESP_ERROR_CHECK(board_display_init(&panel));
   ESP_ERROR_CHECK(display::start(panel));
   ESP_ERROR_CHECK(board_backlight_set(80));
-  display::show({hal::ScreenKind::Idle, hal::Tone::Neutral, "", "STARTING UP", "", 0, ""});
+  display::show({hal::ScreenKind::Idle, hal::Tone::Neutral, "", "Starting up", "", 0, ""});
 
   ESP_ERROR_CHECK(storage::mount());
   const config::DeviceConfig cfg = load_config();
@@ -137,6 +146,7 @@ extern "C" void app_main(void) {
   static app::GameTask game_task(engine, storage::data(), [](const json& msg) {
     net::broadcast(msg.dump());
     update_idle_board(msg);
+    update_clock(msg);
   });
   game_task.start();
 

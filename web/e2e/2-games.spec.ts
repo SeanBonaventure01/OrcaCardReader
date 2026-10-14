@@ -33,7 +33,7 @@ test('Last Stop shows who is on the bus', async () => {
   await load('last_stop', { 'Award points every minutes': '0', 'Award points every seconds': '10' });
   await page.getByLabel('Card to tap').selectOption('new');
   await page.getByTestId('sim-tap').click();
-  await expect(page.getByTestId('feed-item').first()).toContainText('ALL ABOARD');
+  await expect(page.getByTestId('feed-item').first()).toContainText('All aboard');
   await expect(page.getByTestId('game-status-line')).toContainText('On the bus:');
 });
 
@@ -44,7 +44,7 @@ test('Lottery draws a winner from the Live page', async () => {
   await page.getByTestId('sim-tap').click();
   await page.getByTestId('game-action-draw').click();
   await expect(page.getByTestId('toast')).toContainText('Winner: #');
-  await expect(page.getByTestId('announcement')).toContainText('WINNER!');
+  await expect(page.getByTestId('announcement')).toContainText('Winner!');
   await expect(page.getByTestId('game-status-line')).toContainText('Winners: #');
 });
 
@@ -52,6 +52,6 @@ test('Team Lines puts new riders on teams', async () => {
   await load('team_lines');
   await page.getByLabel('Card to tap').selectOption('new');
   await page.getByTestId('sim-tap').click();
-  await expect(page.getByTestId('feed-item').first()).toContainText('FARE PAID');
+  await expect(page.getByTestId('feed-item').first()).toContainText(/Good until/);
   await expect(page.getByTestId('teams')).toContainText('1 Line');
 });

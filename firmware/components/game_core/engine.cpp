@@ -80,11 +80,12 @@ void Engine::show_idle() {
   hal::ScreenCmd cmd;
   cmd.kind = hal::ScreenKind::Idle;
   cmd.headline = (game_ && state_ != GameState::None) ? games_.find(game_->info().id)->name : "";
+  // Detail is only set when the reader isn't taking fares (the idle screen shows it).
   switch (state_) {
-    case GameState::Running: cmd.detail = "TAP CARD HERE"; break;
-    case GameState::Paused: cmd.detail = "PAUSED"; break;
-    case GameState::Ended: cmd.detail = "END OF THE LINE"; break;
-    default: cmd.detail = "NOT IN SERVICE"; break;
+    case GameState::Running: break;
+    case GameState::Paused: cmd.detail = "Paused"; break;
+    case GameState::Ended: cmd.detail = "End of the line"; break;
+    default: cmd.detail = "Not in service"; break;
   }
   if (state_ == GameState::Running) {
     for (const auto& w : events_.active(now())) {
@@ -103,8 +104,22 @@ std::optional<std::int64_t> Engine::wall_clock_ms() const {
 
 // ---------------------------------------------------------------- taps
 
-std::string Engine::fill(const std::string& tmpl, const TapRecord& r) const {
+std::string Engine::until_text(TimeMs valid_until) const {
+  if (!wall_offset_) return "for " + format_mmss(valid_until - now());
+  // Local wall-clock time of day, 12-hour like the real reader ("until 1:07 pm").
+  const std::int64_t local_s = (valid_until + *wall_offset_) / 1000 + utc_offset_min_ * 60;
+  const int minute_of_day = static_cast<int>(((local_s / 60) % 1440 + 1440) % 1440);
+  const int h24 = minute_of_day / 60;
+  const int h12 = h24 % 12 == 0 ? 12 : h24 % 12;
+  char buf[24];
+  std::snprintf(buf, sizeof buf, "until %d:%02d %s", h12, minute_of_day % 60, h24 < 12 ? "am" : "pm");
+  return buf;
+}
+
+std::string Engine::fill(const std::string& tmpl, const TapRecord& r, TimeMs valid_until) const {
   std::string s = tmpl;
+  if (valid_until >= 0) replace_all(s, "{until}", until_text(valid_until));
+  replace_all(s, "{points_text}", std::to_string(r.points) + (r.points == 1 || r.points == -1 ? " pt" : " pts"));
   replace_all(s, "{points}", std::to_string(r.points));
   replace_all(s, "{balance}", std::to_string(r.balance));
   replace_all(s, "{name}", r.name);
@@ -176,10 +191,13 @@ TapRecord Engine::tap(const std::string& uid_in) {
   }
 
   const ThemeEntry theme = orca_theme(fb.outcome);
-  // A game's own headline/detail wins, except that a Bonus upgrade keeps the bonus wording.
-  const bool upgraded = fb.outcome == Outcome::Bonus && fb.headline.empty();
-  rec.headline = fill(upgraded || fb.headline.empty() ? theme.headline : fb.headline, rec);
-  rec.detail = fill(fb.detail.empty() ? theme.detail : fb.detail, rec);
+  std::string headline = fb.headline.empty() ? theme.headline : fb.headline;
+  // Like the real reader: a paid fare says how long it's good for.
+  if (fb.headline.empty() && fb.valid_until >= 0 &&
+      (fb.outcome == Outcome::Accepted || fb.outcome == Outcome::Bonus))
+    headline = "Good {until}";
+  rec.headline = fill(headline, rec, fb.valid_until);
+  rec.detail = fill(fb.detail.empty() ? theme.detail : fb.detail, rec, fb.valid_until);
 
   // Beep first: it's the cue people notice first.
   out_.sound({fb.sound.empty() ? theme.sound : fb.sound});
@@ -305,9 +323,10 @@ void Engine::stop() {
   const auto board = scores_.leaderboard(1);
   if (!board.empty()) {
     if (const Player* p = players_.find(board.front().number))
-      detail = "Winner: " + p->name + " (" + std::to_string(board.front().points) + " pts)";
+      detail = "Winner: " + p->name + " (" + std::to_string(board.front().points) +
+               (board.front().points == 1 ? " pt)" : " pts)");
   }
-  announce("END OF THE LINE", detail, hal::Tone::Neutral, fx::kEndSound, fx::kOffLeds);
+  announce("End of the line", detail, hal::Tone::Neutral, fx::kEndSound, fx::kOffLeds);
   touch();
   show_idle();
   broadcast_state();
@@ -348,7 +367,7 @@ EventWindow Engine::trigger_event(EventKind kind, const std::string& name, TimeM
   if (duration <= 0 || duration > hal::minutes(60)) throw EngineError(400, "duration must be 1 ms to 60 min");
   if (kind == EventKind::Multiplier && (multiplier <= 0 || multiplier > 10))
     throw EngineError(400, "multiplier must be between 0 and 10");
-  EventWindow w = events_.trigger(kind, name.empty() ? "RUSH HOUR" : name, duration, multiplier, now());
+  EventWindow w = events_.trigger(kind, name.empty() ? "Rush hour" : name, duration, multiplier, now());
   EventScheduler::Changes ch;
   ch.started.push_back(w);
   handle_event_changes(ch);
@@ -411,9 +430,12 @@ void Engine::set_open_enrollment(bool open) {
   broadcast_state();
 }
 
-void Engine::sync_wall_clock(std::int64_t epoch_ms) {
+void Engine::sync_wall_clock(std::int64_t epoch_ms, int utc_offset_min) {
   if (epoch_ms < 1'600'000'000'000LL) throw EngineError(400, "epoch_ms looks wrong");
+  if (utc_offset_min < -14 * 60 || utc_offset_min > 14 * 60) throw EngineError(400, "utc_offset_min out of range");
   wall_offset_ = epoch_ms - now();
+  utc_offset_min_ = utc_offset_min;
+  broadcast_state();  // the costume's screen clock picks it up from here
 }
 
 void Engine::play_sound(const std::string& id) {
@@ -463,7 +485,8 @@ json Engine::status_json() {
               {"taps", tap_seq_},
               {"total_points", scores_.total()},
               {"time_ms", t},
-              {"wall_clock_ms", wall_clock_ms() ? json(*wall_clock_ms()) : json(nullptr)}};
+              {"wall_clock_ms", wall_clock_ms() ? json(*wall_clock_ms()) : json(nullptr)},
+              {"utc_offset_min", utc_offset_min_}};
 }
 
 json Engine::players_json() const {
@@ -578,7 +601,7 @@ void Engine::restore(const json& snap) {
   broadcast_score_version_ = scores_.version();
   touch();
   show_idle();
-  if (state_ == GameState::Running) announce("SERVICE RESTORED", "Scores are safe", hal::Tone::Neutral, "", "");
+  if (state_ == GameState::Running) announce("Service restored", "Scores are safe", hal::Tone::Neutral, "", "");
   broadcast_state();
 }
 

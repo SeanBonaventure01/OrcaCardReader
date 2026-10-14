@@ -6,19 +6,19 @@ ThemeEntry orca_theme(Outcome outcome) {
   using hal::Tone;
   switch (outcome) {
     case Outcome::Accepted:
-      return {Tone::Success, "FARE PAID", "+{points} pts · Balance {balance}", "accept", "accept_flash", 2500};
+      return {Tone::Success, "Fare paid", "+{points_text} · Balance {balance}", "accept", "accept_flash", 2500};
     case Outcome::Bonus:
-      return {Tone::Bonus, "BONUS FARE", "+{points} pts ({mult}x) · Balance {balance}", "bonus", "bonus_chase", 3000};
+      return {Tone::Bonus, "Bonus fare", "+{points_text} ({mult}x bonus) · Balance {balance}", "bonus", "bonus_chase", 3000};
     case Outcome::Cooldown:
-      return {Tone::Warning, "TRANSFER", "Card already tapped", "reject", "cooldown_pulse", 2500};
+      return {Tone::Warning, "Transfer", "Card already tapped", "reject", "cooldown_pulse", 2500};
     case Outcome::Rejected:
-      return {Tone::Error, "INSUFFICIENT FUNDS", "", "reject", "reject_flash", 2500};
+      return {Tone::Error, "Insufficient funds", "", "reject", "reject_flash", 2500};
     case Outcome::Unknown:
-      return {Tone::Error, "CARD NOT RECOGNIZED", "Please see the operator", "reject", "reject_flash", 2500};
+      return {Tone::Error, "Card not recognized", "Please see the operator", "reject", "reject_flash", 2500};
     case Outcome::Banned:
-      return {Tone::Error, "SEE CUSTOMER SERVICE", "This card has been suspended", "reject", "reject_flash", 2500};
+      return {Tone::Error, "See customer service", "This card has been suspended", "reject", "reject_flash", 2500};
     case Outcome::Closed:
-      return {Tone::Neutral, "NOT IN SERVICE", "Waiting for the next trip", "reject", "reject_flash", 2000};
+      return {Tone::Neutral, "Not in service", "Waiting for the next trip", "reject", "reject_flash", 2000};
   }
   return {Tone::Neutral, "", "", "", "", 2000};
 }

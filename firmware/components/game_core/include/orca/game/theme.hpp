@@ -18,7 +18,7 @@ struct ThemeEntry {
   std::uint32_t hold_ms;
 };
 
-// The ORCA look: green "FARE PAID", amber "TRANSFER", red "CARD NOT RECOGNIZED", ...
+// The ORCA look: green "Fare paid", amber "Transfer", red "Card not recognized", ...
 ThemeEntry orca_theme(Outcome outcome);
 
 // Sound and LED ids used outside of taps.

@@ -1,0 +1,15 @@
+menu "ORCA display"
+
+config ORCA_LED_PREVIEW
+    bool "Show the LED strip's color as a bar at the bottom of the screen"
+    default n
+    help
+        Development aid: lets the webcam HIL tests see LED effects without a strip fitted.
+        Leave off for the costume (the real reader has no such bar).
+
+config ORCA_BOARD_ROTATION_SECONDS
+    int "Show the top-riders page every N seconds while a game runs (0 = never)"
+    default 30
+    range 0 600
+
+endmenu

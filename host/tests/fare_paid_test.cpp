@@ -26,7 +26,7 @@ TEST_F(FarePaidTest, TapDuringCooldownIsATransfer) {
   advance(seconds(30));
   auto r = tap("Ghost");
   EXPECT_EQ(r.outcome, Outcome::Cooldown);
-  EXPECT_EQ(r.headline, "TRANSFER");
+  EXPECT_EQ(r.headline, "Transfer");
   EXPECT_EQ(r.detail, "Next fare in 4:30");
   EXPECT_EQ(points("Ghost"), 1);
 }
@@ -72,7 +72,7 @@ TEST_F(FarePaidTest, ZeroCooldownAcceptsEveryTap) {
 TEST_F(FarePaidTest, CooldownWaiverLetsYouTapAgain) {
   start("fare_paid");
   tap("Ghost");
-  engine.trigger_event(EventKind::CooldownWaiver, "FREE RIDE", minutes(1), 1);
+  engine.trigger_event(EventKind::CooldownWaiver, "Free ride", minutes(1), 1);
   EXPECT_EQ(tap("Ghost").outcome, Outcome::Accepted);
   advance(minutes(1));
   EXPECT_EQ(tap("Ghost").outcome, Outcome::Cooldown);

@@ -77,7 +77,8 @@ class Engine : public GameEffects {
   Player& update_player(int number, const json& patch);  // keys: name, team, banned
   void adjust_score(int number, std::int64_t delta);
   void set_open_enrollment(bool open);
-  void sync_wall_clock(std::int64_t epoch_ms);
+  // epoch_ms: Unix time; utc_offset_min: local time minus UTC (e.g. -420 for PDT).
+  void sync_wall_clock(std::int64_t epoch_ms, int utc_offset_min = 0);
   void play_sound(const std::string& id);
 
   // --- queries ---
@@ -116,7 +117,8 @@ class Engine : public GameEffects {
   void broadcast_scores_if_changed();
   void show_idle();
   void handle_event_changes(const EventScheduler::Changes& ch);
-  std::string fill(const std::string& tmpl, const TapRecord& r) const;
+  std::string fill(const std::string& tmpl, const TapRecord& r, TimeMs valid_until) const;
+  std::string until_text(TimeMs valid_until) const;
 
   const hal::Clock& clock_;
   hal::Random& rng_;
@@ -126,6 +128,7 @@ class Engine : public GameEffects {
 
   TimeMs offset_ = 0;
   std::optional<std::int64_t> wall_offset_;  // epoch_ms - now()
+  int utc_offset_min_ = 0;
   GameState state_ = GameState::None;
   std::unique_ptr<Game> game_;
   PlayerRegistry players_;

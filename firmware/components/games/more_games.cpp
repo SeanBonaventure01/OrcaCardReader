@@ -54,10 +54,7 @@ Feedback TeamLines::on_tap(GameContext& ctx, Player& player) {
     player.team = best;
   }
   Feedback fb = fare(ctx, player);
-  if (fb.outcome == Outcome::Accepted && !player.team.empty()) {
-    fb.headline = "FARE PAID";
-    fb.detail = "{team} +{points} - Team total {team_total}";
-  }
+  if (fb.outcome == Outcome::Accepted && !player.team.empty()) fb.detail = "{team} +{points_text} · Team total {team_total}";
   return fb;
 }
 
@@ -92,7 +89,7 @@ Feedback LastStop::on_tap(GameContext& ctx, Player& player) {
   Feedback fb;
   if (player.number == holder_) {
     fb.outcome = Outcome::Rejected;
-    fb.headline = "STILL ON THE BUS";
+    fb.headline = "Still on the bus";
     fb.detail = "Next stop in " + format_mmss(next_award_ - ctx.now);
     return fb;
   }
@@ -108,7 +105,7 @@ Feedback LastStop::on_tap(GameContext& ctx, Player& player) {
   next_award_ = ctx.now + interval_;
   fb.outcome = Outcome::Accepted;
   fb.points = 0;  // points come while riding
-  fb.headline = "ALL ABOARD";
+  fb.headline = "All aboard";
   fb.detail = previous ? "You took the bus from " + previous->name : "You're on the bus!";
   return fb;
 }
@@ -166,7 +163,7 @@ void FareInspector::configure(const json& params) {
   schedule_.mean_interval = params.at("every").get<TimeMs>();
   schedule_.duration = params.at("length").get<TimeMs>();
   schedule_.kind = EventKind::Custom;
-  schedule_.name = "FARE INSPECTION";
+  schedule_.name = "Fare inspection";
   schedule_.tag = "inspection";
 }
 
@@ -177,7 +174,7 @@ Feedback FareInspector::on_tap(GameContext& ctx, Player& player) {
   if (inspecting_) {
     checked_.insert(player.number);
     if (fb.outcome == Outcome::Accepted) {
-      fb.headline = "TICKET CHECKED";
+      fb.headline = "Ticket checked";
     } else {
       fb.detail = "Ticket checked - you're safe";
     }
@@ -193,7 +190,7 @@ void FareInspector::on_event(GameContext& ctx, const EventWindow& w, bool starte
     // A recent fare is a valid ticket.
     for (const auto& [no, t] : last_accepted_)
       if (w.start - t < valid_for_) checked_.insert(no);
-    ctx.fx.announce("FARE INSPECTION", "Tap your card to show your ticket!", hal::Tone::Warning, "event_start",
+    ctx.fx.announce("Fare inspection", "Tap your card to show your ticket!", hal::Tone::Warning, "event_start",
                     "event_strobe");
     return;
   }
@@ -209,7 +206,7 @@ void FareInspector::on_event(GameContext& ctx, const EventWindow& w, bool starte
     }
   }
   checked_.clear();
-  ctx.fx.announce("INSPECTION OVER",
+  ctx.fx.announce("Inspection over",
                   fined ? std::to_string(fined) + (fined == 1 ? " rider" : " riders") + " fined " + std::to_string(fine_) + " pts"
                         : "Everyone had a ticket!",
                   hal::Tone::Neutral, "event_end", "");
@@ -271,7 +268,7 @@ json Lottery::on_action(GameContext& ctx, const std::string& action, const json&
   const Player* p = ctx.players.find(winner);
   char line[64];
   std::snprintf(line, sizeof line, "#%02d %s", winner, p->name.c_str());
-  ctx.fx.announce("WINNER!", line, hal::Tone::Bonus, "bonus", "bonus_chase");
+  ctx.fx.announce("Winner!", line, hal::Tone::Bonus, "bonus", "bonus_chase");
   return json{{"winner", winner}, {"name", p->name}, {"tickets", ctx.scores.points(winner)}, {"pool", total},
               {"draw", winners_.size()}};
 }

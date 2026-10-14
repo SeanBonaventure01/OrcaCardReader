@@ -36,7 +36,7 @@ const calls: Record<string, (c: ApiClient) => Promise<unknown>> = {
   // Deliberately invalid field to check the error path.
   patch_player_bad_field: (c) => c.updatePlayer(1, { colour: 'orange' } as never),
   adjust_score: (c) => c.adjustScore(1, -3),
-  trigger_event: (c) => c.triggerEvent({ name: 'RUSH HOUR', duration_ms: 120000, multiplier: 3 }),
+  trigger_event: (c) => c.triggerEvent({ name: 'Rush hour', duration_ms: 120000, multiplier: 3 }),
   status_during_event: (c) => c.status(),
   trigger_event_bad_kind: (c) => c.triggerEvent({ kind: 'earthquake' as never, duration_ms: 1000 }),
   trigger_event_not_running: (c) => c.triggerEvent({ duration_ms: 1000 }),
@@ -44,6 +44,7 @@ const calls: Record<string, (c: ApiClient) => Promise<unknown>> = {
   settings_patch: (c) => c.patchSettings({ volume: 35 }),
   settings_patch_invalid: (c) => c.patchSettings({ brightness: 0 }),
   enrollment_close: (c) => c.setEnrollment(false),
+  clock_sync: (c) => c.syncClock(1793476920000, -420),
   unknown_route: (c) => c.request('GET', '/api/nope'),
 };
 
