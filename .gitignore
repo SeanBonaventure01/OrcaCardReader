@@ -1,0 +1,22 @@
+# Build output
+build/
+host/build/
+firmware/build/
+firmware/sdkconfig
+firmware/sdkconfig.old
+firmware/managed_components/
+firmware/dependencies.lock
+
+# Web
+web/node_modules/
+web/dist/
+
+# Editors / OS
+*.swp
+*.swo
+.DS_Store
+.vscode/
+.idea/
+
+# Test artifacts
+tools/hil/artifacts/

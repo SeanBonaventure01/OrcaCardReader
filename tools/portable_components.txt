@@ -1,0 +1,2 @@
+# Portable (★) components under firmware/components/. These must not include ESP-IDF headers.
+orca_hal
