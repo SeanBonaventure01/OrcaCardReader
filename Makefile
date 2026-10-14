@@ -6,9 +6,11 @@ IDF_EXPORT := . $(IDF_PATH)/export.sh >/dev/null 2>&1
 PORT       ?= $(firstword $(wildcard /dev/cu.usbserial-*))
 HOST_BUILD := host/build
 
+
+.PHONY: web-test web-e2e web-build
 .PHONY: check portable host-test host-configure fw-build flash monitor clean sim repl scenarios scenarios-update props-long
 
-check: portable host-test fw-build
+check: portable host-test web-test web-e2e fw-build
 
 portable:
 	@tools/check_portable.sh
@@ -42,6 +44,20 @@ scenarios-update: host-configure
 props-long: host-configure
 	@cmake --build $(HOST_BUILD)
 	ORCA_PROP_SEEDS=2000 $(HOST_BUILD)/orca_tests --gtest_brief=1 --gtest_filter='AllGames/*'
+
+web/node_modules:
+	cd web && npm install
+
+web-build: web/node_modules
+	cd web && npm run build --silent
+
+# Type check + unit/contract tests (Vitest)
+web-test: web/node_modules
+	cd web && npx tsc --noEmit && npx vitest run
+
+# Playwright against orca-sim (builds the UI first)
+web-e2e: web/node_modules host-test
+	cd web && npx playwright test
 
 fw-build:
 	@if [ -f $(IDF_PATH)/export.sh ]; then \

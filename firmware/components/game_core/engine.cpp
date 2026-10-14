@@ -185,6 +185,7 @@ TapRecord Engine::tap(const std::string& uid_in) {
   touch();
   broadcast(json{{"type", "tap"}, {"tap", rec}});
   broadcast_scores_if_changed();
+  broadcast_state();  // keeps rider/tap/point totals live on every phone
   return rec;
 }
 

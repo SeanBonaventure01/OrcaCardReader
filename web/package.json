@@ -1,0 +1,27 @@
+{
+  "name": "orca-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build && node scripts/postbuild.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "e2e": "playwright test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@preact/signals": "^2.11.3",
+    "preact": "^11.0.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.0",
+    "@preact/preset-vite": "^2.10.6",
+    "@testing-library/preact": "^3.2.4",
+    "@types/node": "^26.6.5",
+    "jsdom": "^29.1.1",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.4"
+  }
+}

@@ -9,20 +9,89 @@
   },
   {
     "name": "games_list",
-    "request": {"method": "GET", "path": "/api/games"},
-    "response": {"status": 200, "body": {"games": [
-      {"id": "fare_paid", "name": "Fare Paid", "description": "<string>", "params": [
-        {"key": "cooldown", "label": "<string>", "type": "duration", "default": 300000, "min": 0, "max": 3600000, "help": "<string>"},
-        {"key": "points", "label": "<string>", "type": "int", "default": 1, "min": 1, "max": 100}
-      ]},
-      {"id": "rush_hour", "name": "Rush Hour", "description": "<string>", "params": [
-        {"key": "cooldown", "type": "duration"},
-        {"key": "points", "type": "int"},
-        {"key": "every", "type": "duration", "default": 900000},
-        {"key": "length", "type": "duration", "default": 120000},
-        {"key": "multiplier", "type": "float", "default": 2.0}
-      ]}
-    ]}}
+    "request": {
+      "method": "GET",
+      "path": "/api/games"
+    },
+    "response": {
+      "status": 200,
+      "body": {
+        "games": [
+          {
+            "id": "fare_paid",
+            "name": "Fare Paid",
+            "description": "<string>",
+            "params": [
+              {
+                "key": "cooldown",
+                "label": "Cooldown between taps",
+                "type": "duration",
+                "default": 300000,
+                "min": 0,
+                "max": 3600000,
+                "help": "How long a card must wait before it can score again"
+              },
+              {
+                "key": "points",
+                "label": "Points per fare",
+                "type": "int",
+                "default": 1,
+                "min": 1,
+                "max": 100
+              }
+            ]
+          },
+          {
+            "id": "rush_hour",
+            "name": "Rush Hour",
+            "description": "<string>",
+            "params": [
+              {
+                "key": "cooldown",
+                "label": "Cooldown between taps",
+                "type": "duration",
+                "default": 300000,
+                "min": 0,
+                "max": 3600000,
+                "help": "How long a card must wait before it can score again"
+              },
+              {
+                "key": "points",
+                "label": "Points per fare",
+                "type": "int",
+                "default": 1,
+                "min": 1,
+                "max": 100
+              },
+              {
+                "key": "every",
+                "label": "Average time between rush hours",
+                "type": "duration",
+                "default": 900000,
+                "min": 60000,
+                "max": 7200000
+              },
+              {
+                "key": "length",
+                "label": "Rush hour length",
+                "type": "duration",
+                "default": 120000,
+                "min": 10000,
+                "max": 1800000
+              },
+              {
+                "key": "multiplier",
+                "label": "Points multiplier",
+                "type": "float",
+                "default": 2.0,
+                "min": 1,
+                "max": 10
+              }
+            ]
+          }
+        ]
+      }
+    }
   },
   {
     "name": "select_game",
