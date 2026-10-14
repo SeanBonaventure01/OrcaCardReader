@@ -10,7 +10,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(ORCA_COVERAGE "Build with coverage instrumentation" OFF)
 
-add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 if(ORCA_COVERAGE)
   add_compile_options(--coverage -O0 -g)
   add_link_options(--coverage)
@@ -24,20 +23,25 @@ FetchContent_Declare(
 set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
+# Our code builds with warnings as errors (third-party code above does not).
+add_compile_options(-Wall -Wextra -Wpedantic -Werror)
+
 set(ORCA_COMPONENTS ${CMAKE_CURRENT_LIST_DIR}/../firmware/components)
 
 # ★ portable components
-add_subdirectory(${ORCA_COMPONENTS}/orca_hal ${CMAKE_BINARY_DIR}/components/orca_hal)
+foreach(comp nlohmann_json orca_hal game_core games)
+  add_subdirectory(${ORCA_COMPONENTS}/${comp} ${CMAKE_BINARY_DIR}/components/${comp})
+endforeach()
 
 # Fakes for tests and the simulator
 add_library(orca_fakes INTERFACE)
 target_include_directories(orca_fakes INTERFACE fakes/include)
-target_link_libraries(orca_fakes INTERFACE orca_hal)
+target_link_libraries(orca_fakes INTERFACE orca_hal nlohmann_json)
 
 # Tests
 enable_testing()
 file(GLOB ORCA_TEST_SOURCES CONFIGURE_DEPENDS tests/*_test.cpp)
 add_executable(orca_tests ${ORCA_TEST_SOURCES})
-target_link_libraries(orca_tests PRIVATE orca_fakes GTest::gtest_main GTest::gmock)
+target_link_libraries(orca_tests PRIVATE orca_fakes orca_games GTest::gtest_main GTest::gmock)
 include(GoogleTest)
-gtest_discover_tests(orca_tests)
+gtest_discover_tests(orca_tests DISCOVERY_TIMEOUT 30)
