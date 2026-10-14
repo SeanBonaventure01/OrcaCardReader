@@ -1,0 +1,13 @@
+{
+  "game": "fare_paid",
+  "seed": 1,
+  "open_enrollment": false,
+  "players": [{"name": "Ghost"}],
+  "steps": [
+    {"at": "0s", "tap": "04DEADBEEF", "expect": {"outcome": "unknown", "players": 1}},
+    {"at": "5s", "api": ["POST", "/api/enrollment", {"open": true}]},
+    {"at": "10s", "tap": "04DEADBEEF", "expect": {"outcome": "accepted", "players": 2}},
+    {"at": "15s", "api": ["PATCH", "/api/players/2", {"banned": true}]},
+    {"at": "6m", "tap": "04DEADBEEF", "expect": {"outcome": "banned", "score": {"04DEADBEEF": 1}}}
+  ]
+}

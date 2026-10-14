@@ -38,13 +38,24 @@ add_library(orca_fakes INTERFACE)
 target_include_directories(orca_fakes INTERFACE fakes/include)
 target_link_libraries(orca_fakes INTERFACE orca_hal nlohmann_json)
 
+# Simulator library (World, scenario runner, HTTP/WS server) and the orca-sim tool
+add_library(orca_sim_lib STATIC sim/scenario.cpp sim/http_util.cpp sim/sim_server.cpp)
+target_include_directories(orca_sim_lib PUBLIC sim)
+target_link_libraries(orca_sim_lib PUBLIC orca_fakes orca_games orca_api)
+find_package(Threads REQUIRED)
+target_link_libraries(orca_sim_lib PUBLIC Threads::Threads)
+
+add_executable(orca-sim sim/main.cpp)
+target_link_libraries(orca-sim PRIVATE orca_sim_lib)
+
 # Tests
 enable_testing()
 file(GLOB ORCA_TEST_SOURCES CONFIGURE_DEPENDS tests/*_test.cpp)
 add_executable(orca_tests ${ORCA_TEST_SOURCES})
-target_include_directories(orca_tests PRIVATE sim)
-target_link_libraries(orca_tests PRIVATE orca_fakes orca_games orca_api GTest::gtest_main GTest::gmock)
-target_compile_definitions(orca_tests PRIVATE ORCA_API_FIXTURES_DIR="${CMAKE_CURRENT_LIST_DIR}/tests/api_fixtures")
+target_link_libraries(orca_tests PRIVATE orca_sim_lib GTest::gtest_main GTest::gmock)
+target_compile_definitions(orca_tests PRIVATE
+  ORCA_API_FIXTURES_DIR="${CMAKE_CURRENT_LIST_DIR}/tests/api_fixtures"
+  ORCA_SCENARIOS_DIR="${CMAKE_CURRENT_LIST_DIR}/scenarios")
 # One ctest entry; googletest itself reports each test. (gtest_discover_tests mis-parses
 # parameterized test listings and registers duplicates.)
 add_test(NAME orca_tests COMMAND orca_tests --gtest_brief=1)

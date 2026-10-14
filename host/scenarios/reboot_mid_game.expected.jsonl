@@ -1,0 +1,35 @@
+{"out":{"detail":"Not in service","headline":"Fare Paid","hold_ms":0,"kind":"idle","out":"screen","player":"","tone":"neutral"},"t":0}
+{"out":{"id":"start","out":"sound"},"t":0}
+{"out":{"duration_ms":0,"effect":"idle_breathe","out":"leds"},"t":0}
+{"out":{"detail":"Tap card here","headline":"Fare Paid","hold_ms":0,"kind":"idle","out":"screen","player":"","tone":"neutral"},"t":0}
+{"out":{"id":"accept","out":"sound"},"t":0}
+{"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":0}
+{"out":{"detail":"+1 pts · Balance 1","headline":"FARE PAID","hold_ms":2500,"kind":"result","out":"screen","player":"#01 Ghost","tone":"success"},"t":0}
+{"result":{"balance":1,"detail":"+1 pts · Balance 1","headline":"FARE PAID","multiplier":1.0,"name":"Ghost","outcome":"accepted","player":1,"points":1,"seq":1,"t":0,"uid":"04000000000001"},"t":0,"tap":"Ghost"}
+{"out":{"id":"accept","out":"sound"},"t":60000}
+{"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":60000}
+{"out":{"detail":"+1 pts · Balance 1","headline":"FARE PAID","hold_ms":2500,"kind":"result","out":"screen","player":"#02 Witch","tone":"success"},"t":60000}
+{"result":{"balance":1,"detail":"+1 pts · Balance 1","headline":"FARE PAID","multiplier":1.0,"name":"Witch","outcome":"accepted","player":2,"points":1,"seq":2,"t":60000,"uid":"04000000000002"},"t":60000,"tap":"Witch"}
+{"out":{"id":"event_start","out":"sound"},"t":120000}
+{"out":{"duration_ms":4000,"effect":"event_strobe","out":"leds"},"t":120000}
+{"out":{"detail":"2x points for 5:00","headline":"RUSH HOUR","hold_ms":4000,"kind":"banner","out":"screen","player":"","tone":"bonus"},"t":120000}
+{"out":{"detail":"RUSH HOUR","headline":"Fare Paid","hold_ms":0,"kind":"idle","out":"screen","player":"","tone":"neutral"},"t":120000}
+{"api":["POST","/api/events/trigger"],"status":200,"t":120000}
+{"reboot":true,"t":180000}
+{"out":{"detail":"RUSH HOUR","headline":"Fare Paid","hold_ms":0,"kind":"idle","out":"screen","player":"","tone":"neutral"},"t":180000}
+{"out":{"detail":"Scores are safe","headline":"SERVICE RESTORED","hold_ms":4000,"kind":"banner","out":"screen","player":"","tone":"neutral"},"t":180000}
+{"expect":{"events_active":1,"players":2,"score":{"Ghost":1,"Witch":1},"state":"running"},"ok":true,"t":180000}
+{"out":{"id":"reject","out":"sound"},"t":240000}
+{"out":{"duration_ms":2500,"effect":"cooldown_pulse","out":"leds"},"t":240000}
+{"out":{"detail":"Next fare in 1:00","headline":"TRANSFER","hold_ms":2500,"kind":"result","out":"screen","player":"#01 Ghost","tone":"warning"},"t":240000}
+{"result":{"balance":1,"detail":"Next fare in 1:00","headline":"TRANSFER","multiplier":1.0,"name":"Ghost","outcome":"cooldown","player":1,"points":0,"seq":3,"t":240000,"uid":"04000000000001"},"t":240000,"tap":"Ghost"}
+{"expect":{"outcome":"cooldown"},"ok":true,"t":240000}
+{"out":{"id":"bonus","out":"sound"},"t":300000}
+{"out":{"duration_ms":3000,"effect":"bonus_chase","out":"leds"},"t":300000}
+{"out":{"detail":"+2 pts (2x) · Balance 3","headline":"BONUS FARE","hold_ms":3000,"kind":"result","out":"screen","player":"#01 Ghost","tone":"bonus"},"t":300000}
+{"result":{"balance":3,"detail":"+2 pts (2x) · Balance 3","headline":"BONUS FARE","multiplier":2.0,"name":"Ghost","outcome":"bonus","player":1,"points":2,"seq":4,"t":300000,"uid":"04000000000001"},"t":300000,"tap":"Ghost"}
+{"expect":{"outcome":"bonus","score":{"Ghost":3}},"ok":true,"t":300000}
+{"out":{"id":"event_end","out":"sound"},"t":480000}
+{"out":{"duration_ms":0,"effect":"idle_breathe","out":"leds"},"t":480000}
+{"out":{"detail":"Tap card here","headline":"Fare Paid","hold_ms":0,"kind":"idle","out":"screen","player":"","tone":"neutral"},"t":480000}
+{"expect":{"events_active":0},"ok":true,"t":480000}

@@ -1,0 +1,13 @@
+{
+  "game": "fare_paid",
+  "params": {"cooldown": 60000, "points": 2},
+  "seed": 1,
+  "players": [{"name": "Ghost"}],
+  "steps": [
+    {"at": "0s", "tap": "Ghost"},
+    {"at": "59999ms", "tap": "Ghost", "expect": {"outcome": "cooldown"}},
+    {"at": "60s", "tap": "Ghost", "expect": {"outcome": "accepted"}},
+    {"at": "60s", "tap": "Ghost", "expect": {"outcome": "cooldown"}},
+    {"at": "2m", "tap": "Ghost", "expect": {"outcome": "accepted", "score": {"Ghost": 6}}}
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "game": "fare_paid",
+  "seed": 1,
+  "players": [{"name": "Ghost"}, {"name": "Witch"}],
+  "steps": [
+    {"at": "0s", "tap": "Ghost", "expect": {"outcome": "accepted"}},
+    {"at": "10s", "tap": "Witch", "expect": {"outcome": "accepted"}},
+    {"at": "30s", "tap": "Ghost", "expect": {"outcome": "cooldown"}},
+    {"at": "5m", "tap": "Ghost", "expect": {"outcome": "accepted"}},
+    {"at": "5m", "expect": {"score": {"Ghost": 2, "Witch": 1}, "state": "running", "players": 2}},
+    {"at": "6m", "api": ["POST", "/api/game/stop"]},
+    {"at": "6m", "tap": "Witch", "expect": {"outcome": "closed", "state": "ended"}}
+  ]
+}

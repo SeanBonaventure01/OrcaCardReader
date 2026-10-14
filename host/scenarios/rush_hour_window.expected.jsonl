@@ -1,0 +1,44 @@
+{"out":{"detail":"Not in service","headline":"Rush Hour","hold_ms":0,"kind":"idle","out":"screen","player":"","tone":"neutral"},"t":0}
+{"out":{"id":"start","out":"sound"},"t":0}
+{"out":{"duration_ms":0,"effect":"idle_breathe","out":"leds"},"t":0}
+{"out":{"detail":"Tap card here","headline":"Rush Hour","hold_ms":0,"kind":"idle","out":"screen","player":"","tone":"neutral"},"t":0}
+{"out":{"id":"accept","out":"sound"},"t":0}
+{"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":0}
+{"out":{"detail":"+1 pts · Balance 1","headline":"FARE PAID","hold_ms":2500,"kind":"result","out":"screen","player":"#01 Ghost","tone":"success"},"t":0}
+{"result":{"balance":1,"detail":"+1 pts · Balance 1","headline":"FARE PAID","multiplier":1.0,"name":"Ghost","outcome":"accepted","player":1,"points":1,"seq":1,"t":0,"uid":"04000000000001"},"t":0,"tap":"Ghost"}
+{"expect":{"events_active":0,"outcome":"accepted"},"ok":true,"t":0}
+{"out":{"id":"event_start","out":"sound"},"t":240000}
+{"out":{"duration_ms":4000,"effect":"event_strobe","out":"leds"},"t":240000}
+{"out":{"detail":"For 0:10","headline":"FREE RIDE","hold_ms":4000,"kind":"banner","out":"screen","player":"","tone":"bonus"},"t":240000}
+{"out":{"detail":"FREE RIDE","headline":"Rush Hour","hold_ms":0,"kind":"idle","out":"screen","player":"","tone":"neutral"},"t":240000}
+{"api":["POST","/api/events/trigger"],"status":200,"t":240000}
+{"expect":{"events_active":1},"ok":true,"t":240000}
+{"out":{"id":"event_end","out":"sound"},"t":1200000}
+{"out":{"duration_ms":0,"effect":"idle_breathe","out":"leds"},"t":1200000}
+{"out":{"detail":"Tap card here","headline":"Rush Hour","hold_ms":0,"kind":"idle","out":"screen","player":"","tone":"neutral"},"t":1200000}
+{"out":{"id":"event_start","out":"sound"},"t":1200000}
+{"out":{"duration_ms":4000,"effect":"event_strobe","out":"leds"},"t":1200000}
+{"out":{"detail":"3x points for 1:00","headline":"RUSH HOUR","hold_ms":4000,"kind":"banner","out":"screen","player":"","tone":"bonus"},"t":1200000}
+{"out":{"detail":"RUSH HOUR","headline":"Rush Hour","hold_ms":0,"kind":"idle","out":"screen","player":"","tone":"neutral"},"t":1200000}
+{"out":{"id":"event_end","out":"sound"},"t":1200000}
+{"out":{"duration_ms":0,"effect":"idle_breathe","out":"leds"},"t":1200000}
+{"out":{"detail":"Tap card here","headline":"Rush Hour","hold_ms":0,"kind":"idle","out":"screen","player":"","tone":"neutral"},"t":1200000}
+{"out":{"id":"event_start","out":"sound"},"t":1200000}
+{"out":{"duration_ms":4000,"effect":"event_strobe","out":"leds"},"t":1200000}
+{"out":{"detail":"3x points for 1:00","headline":"RUSH HOUR","hold_ms":4000,"kind":"banner","out":"screen","player":"","tone":"bonus"},"t":1200000}
+{"out":{"detail":"RUSH HOUR","headline":"Rush Hour","hold_ms":0,"kind":"idle","out":"screen","player":"","tone":"neutral"},"t":1200000}
+{"out":{"id":"event_end","out":"sound"},"t":1200000}
+{"out":{"duration_ms":0,"effect":"idle_breathe","out":"leds"},"t":1200000}
+{"out":{"detail":"Tap card here","headline":"Rush Hour","hold_ms":0,"kind":"idle","out":"screen","player":"","tone":"neutral"},"t":1200000}
+{"out":{"id":"event_start","out":"sound"},"t":1200000}
+{"out":{"duration_ms":4000,"effect":"event_strobe","out":"leds"},"t":1200000}
+{"out":{"detail":"3x points for 1:00","headline":"RUSH HOUR","hold_ms":4000,"kind":"banner","out":"screen","player":"","tone":"bonus"},"t":1200000}
+{"out":{"detail":"RUSH HOUR","headline":"Rush Hour","hold_ms":0,"kind":"idle","out":"screen","player":"","tone":"neutral"},"t":1200000}
+{"out":{"id":"event_end","out":"sound"},"t":1200000}
+{"out":{"duration_ms":0,"effect":"idle_breathe","out":"leds"},"t":1200000}
+{"out":{"detail":"Tap card here","headline":"Rush Hour","hold_ms":0,"kind":"idle","out":"screen","player":"","tone":"neutral"},"t":1200000}
+{"out":{"id":"accept","out":"sound"},"t":1200000}
+{"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":1200000}
+{"out":{"detail":"+1 pts · Balance 2","headline":"FARE PAID","hold_ms":2500,"kind":"result","out":"screen","player":"#01 Ghost","tone":"success"},"t":1200000}
+{"result":{"balance":2,"detail":"+1 pts · Balance 2","headline":"FARE PAID","multiplier":1.0,"name":"Ghost","outcome":"accepted","player":1,"points":1,"seq":2,"t":1200000,"uid":"04000000000001"},"t":1200000,"tap":"Ghost"}
+{"expect":{"state":"running"},"ok":true,"t":1200000}

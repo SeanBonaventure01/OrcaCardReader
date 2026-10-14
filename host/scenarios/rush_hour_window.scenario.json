@@ -1,0 +1,13 @@
+{
+  "game": "rush_hour",
+  "params": {"every": 300000, "length": 60000, "multiplier": 3, "cooldown": 0},
+  "seed": 7,
+  "players": [{"name": "Ghost"}],
+  "steps": [
+    {"at": "0s", "tap": "Ghost", "expect": {"outcome": "accepted", "events_active": 0}},
+    {"at": "4m", "api": ["POST", "/api/events/trigger", {"kind": "cooldown_waiver", "name": "FREE RIDE", "duration_ms": 10000}]},
+    {"at": "4m", "expect": {"events_active": 1}},
+    {"at": "20m", "tap": "Ghost"},
+    {"at": "20m", "expect": {"state": "running"}}
+  ]
+}

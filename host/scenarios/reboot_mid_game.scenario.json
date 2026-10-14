@@ -1,0 +1,15 @@
+{
+  "game": "fare_paid",
+  "seed": 1,
+  "players": [{"name": "Ghost", "team": "Link"}, {"name": "Witch"}],
+  "steps": [
+    {"at": "0s", "tap": "Ghost"},
+    {"at": "1m", "tap": "Witch"},
+    {"at": "2m", "api": ["POST", "/api/events/trigger", {"duration_ms": 300000, "multiplier": 2}]},
+    {"at": "3m", "reboot": true},
+    {"at": "3m", "expect": {"score": {"Ghost": 1, "Witch": 1}, "state": "running", "players": 2, "events_active": 1}},
+    {"at": "4m", "tap": "Ghost", "expect": {"outcome": "cooldown"}},
+    {"at": "5m", "tap": "Ghost", "expect": {"outcome": "bonus", "score": {"Ghost": 3}}},
+    {"at": "8m", "expect": {"events_active": 0}}
+  ]
+}
