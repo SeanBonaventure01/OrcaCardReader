@@ -1,6 +1,7 @@
 #include "orca/api/api.hpp"
 
 #include <algorithm>
+#include <cinttypes>
 #include <cstdio>
 
 namespace orca::api {
@@ -302,7 +303,7 @@ ApiResponse Api::login(Ctx& c) {
     sessions_.erase(oldest);
   }
   char token[33];
-  for (int i = 0; i < 4; ++i) std::snprintf(token + i * 8, 9, "%08x", rng_.next_u32());
+  for (int i = 0; i < 4; ++i) std::snprintf(token + i * 8, 9, "%08" PRIx32, rng_.next_u32());
   sessions_[token] = now + options_.session_ttl;
   return json_response(200, json{{"token", token}, {"expires_in_ms", options_.session_ttl}});
 }
