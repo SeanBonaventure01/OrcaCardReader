@@ -29,7 +29,7 @@ add_compile_options(-Wall -Wextra -Wpedantic -Werror)
 set(ORCA_COMPONENTS ${CMAKE_CURRENT_LIST_DIR}/../firmware/components)
 
 # ★ portable components
-foreach(comp nlohmann_json orca_hal game_core games config api)
+foreach(comp nlohmann_json orca_hal game_core games config api nfc_core fx_core)
   add_subdirectory(${ORCA_COMPONENTS}/${comp} ${CMAKE_BINARY_DIR}/components/${comp})
 endforeach()
 
@@ -52,7 +52,7 @@ target_link_libraries(orca-sim PRIVATE orca_sim_lib)
 enable_testing()
 file(GLOB ORCA_TEST_SOURCES CONFIGURE_DEPENDS tests/*_test.cpp)
 add_executable(orca_tests ${ORCA_TEST_SOURCES})
-target_link_libraries(orca_tests PRIVATE orca_sim_lib GTest::gtest_main GTest::gmock)
+target_link_libraries(orca_tests PRIVATE orca_sim_lib orca_nfc_core orca_fx_core GTest::gtest_main GTest::gmock)
 target_compile_definitions(orca_tests PRIVATE
   ORCA_API_FIXTURES_DIR="${CMAKE_CURRENT_LIST_DIR}/tests/api_fixtures"
   ORCA_SCENARIOS_DIR="${CMAKE_CURRENT_LIST_DIR}/scenarios")

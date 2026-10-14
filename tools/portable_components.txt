@@ -5,3 +5,5 @@ games
 nlohmann_json
 config
 api
+nfc_core
+fx_core
