@@ -1,0 +1,19 @@
+{
+  "game": "lottery",
+  "params": {"cooldown": 60000},
+  "seed": 4,
+  "players": [{"name": "Ghost"}, {"name": "Witch"}, {"name": "Bat"}],
+  "steps": [
+    {"at": "0s", "tap": "Ghost"},
+    {"at": "0s", "tap": "Witch"},
+    {"at": "1m", "tap": "Ghost"},
+    {"at": "2m", "tap": "Ghost"},
+    {"at": "2m", "tap": "Bat"},
+    {"at": "3m", "api": ["POST", "/api/game/stop"]},
+    {"at": "3m", "api": ["POST", "/api/game/action", {"action": "draw"}]},
+    {"at": "3m5s", "api": ["POST", "/api/game/action", {"action": "draw"}]},
+    {"at": "3m10s", "api": ["POST", "/api/game/action", {"action": "draw"}]},
+    {"at": "3m15s", "api": ["POST", "/api/game/action", {"action": "draw"}]},
+    {"at": "3m15s", "expect": {"state": "ended"}}
+  ]
+}

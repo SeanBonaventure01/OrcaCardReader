@@ -162,6 +162,12 @@ Api::Api(EngineGateway& gateway, SettingsStore& settings, const hal::Clock& cloc
                            }));
     });
   }
+  add("POST", "/api/game/action", true, [this](Ctx& c) {
+    only_keys(c.body, {"action", "args"});
+    const std::string action = req_string(c.body, "action", 32);
+    const json args = c.body.value("args", json::object());
+    return json_response(200, engine([&](E& e) { return e.game_action(action, args); }));
+  });
   add("GET", "/api/players", true, [this](Ctx&) {
     return json_response(200, json{{"players", engine([](E& e) { return e.players_json(); })}});
   });

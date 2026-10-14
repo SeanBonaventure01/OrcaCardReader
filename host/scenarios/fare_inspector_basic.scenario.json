@@ -1,0 +1,14 @@
+{
+  "game": "fare_inspector",
+  "params": {"every": 3600000, "length": 60000, "valid_for": 120000, "fine": 3},
+  "seed": 1,
+  "players": [{"name": "Ghost"}, {"name": "Witch"}, {"name": "Bat"}],
+  "steps": [
+    {"at": "0s", "tap": "Ghost"},
+    {"at": "0s", "tap": "Witch"},
+    {"at": "5m", "tap": "Bat"},
+    {"at": "5m30s", "api": ["POST", "/api/events/trigger", {"kind": "custom", "name": "FARE INSPECTION", "duration_ms": 60000}]},
+    {"at": "6m", "tap": "Witch", "expect": {"outcome": "accepted"}},
+    {"at": "6m31s", "expect": {"score": {"Ghost": -2, "Witch": 2, "Bat": 1}, "events_active": 0}}
+  ]
+}

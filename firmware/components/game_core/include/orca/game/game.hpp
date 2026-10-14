@@ -15,11 +15,19 @@
 
 namespace orca::game {
 
+// A button the phone UI shows for this game (e.g. Lottery's "Draw a winner").
+struct GameAction {
+  std::string id;
+  std::string label;
+  std::string help;
+};
+
 struct GameInfo {
   std::string id;  // stable, used in the API and snapshots
   std::string name;
   std::string description;
   ParamSchema params;
+  std::vector<GameAction> actions;
 };
 
 // Out-of-band effects a game may trigger outside of a tap (e.g. from on_tick).
@@ -59,6 +67,11 @@ class Game {
 
   // Extra fields for the status API and idle screen (e.g. "holder" in Last Stop).
   virtual json status(const GameContext&) const { return json::object(); }
+
+  // Runs one of info().actions. Returns a result for the API; throw EngineError for bad input.
+  virtual json on_action(GameContext&, const std::string& action, const json& /*args*/) {
+    throw EngineError(404, "unknown action: " + action);
+  }
 
   // Per-session state for snapshots. Times are engine game time, which survives reboots.
   virtual json save() const = 0;

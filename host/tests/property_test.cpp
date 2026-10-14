@@ -252,12 +252,16 @@ TEST_P(Properties, InvariantsHoldAndSnapshotsReplayIdentically) {
 INSTANTIATE_TEST_SUITE_P(AllGames, Properties,
                          ::testing::Values(Case{"fare_paid", json::object()},
                                            Case{"fare_paid", {{"cooldown", 0}, {"points", 3}}},
-                                           Case{"rush_hour", {{"every", minutes(3)}, {"length", seconds(40)}}}),
+                                           Case{"rush_hour", {{"every", minutes(3)}, {"length", seconds(40)}}},
+                                           Case{"team_lines", {{"teams", "Red,Blue,Green"}, {"cooldown", seconds(30)}}},
+                                           Case{"last_stop", {{"interval", seconds(20)}, {"cooldown", seconds(30)}}},
+                                           Case{"fare_inspector", {{"every", minutes(4)}, {"length", seconds(45)}, {"valid_for", minutes(2)}}},
+                                           Case{"lottery", {{"cooldown", seconds(20)}}}),
                          [](const auto& info) { return info.param.game + "_" + std::to_string(info.index); });
 
 // Every registered game must appear above.
 TEST(Properties, CoverEveryRegisteredGame) {
-  std::set<std::string> covered{"fare_paid", "rush_hour"};
+  std::set<std::string> covered{"fare_paid", "rush_hour", "team_lines", "last_stop", "fare_inspector", "lottery"};
   for (const GameInfo* g : registry().all()) EXPECT_TRUE(covered.count(g->id)) << g->id << " has no property case";
 }
 

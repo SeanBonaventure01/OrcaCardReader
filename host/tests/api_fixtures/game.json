@@ -1,11 +1,26 @@
 [
   {
     "name": "status_initial",
-    "request": {"method": "GET", "path": "/api/status", "auth": false},
-    "response": {"status": 200, "body": {
-      "state": "none", "game": "<null>", "players": 0, "open_enrollment": true, "events": [],
-      "next_event_in_ms": "<null>", "taps": 0, "total_points": 0, "time_ms": 1000, "wall_clock_ms": "<null>"
-    }}
+    "request": {
+      "method": "GET",
+      "path": "/api/status",
+      "auth": false
+    },
+    "response": {
+      "status": 200,
+      "body": {
+        "state": "none",
+        "game": "<null>",
+        "players": 0,
+        "open_enrollment": true,
+        "events": [],
+        "next_event_in_ms": "<null>",
+        "taps": 0,
+        "total_points": 0,
+        "time_ms": 1000,
+        "wall_clock_ms": "<null>"
+      }
+    }
   },
   {
     "name": "games_list",
@@ -39,7 +54,8 @@
                 "min": 1,
                 "max": 100
               }
-            ]
+            ],
+            "actions": []
           },
           {
             "id": "rush_hour",
@@ -87,6 +103,41 @@
                 "min": 1,
                 "max": 10
               }
+            ],
+            "actions": []
+          },
+          {
+            "id": "team_lines",
+            "name": "Team Lines",
+            "description": "<string>",
+            "params": "<array>",
+            "actions": []
+          },
+          {
+            "id": "last_stop",
+            "name": "Last Stop",
+            "description": "<string>",
+            "params": "<array>",
+            "actions": []
+          },
+          {
+            "id": "fare_inspector",
+            "name": "Fare Inspector",
+            "description": "<string>",
+            "params": "<array>",
+            "actions": []
+          },
+          {
+            "id": "lottery",
+            "name": "Last Call Lottery",
+            "description": "<string>",
+            "params": "<array>",
+            "actions": [
+              {
+                "id": "draw",
+                "label": "Draw a winner",
+                "help": "<string>"
+              }
             ]
           }
         ]
@@ -95,106 +146,476 @@
   },
   {
     "name": "select_game",
-    "request": {"method": "POST", "path": "/api/game/select", "body": {"id": "fare_paid", "params": {"cooldown": 60000}}},
-    "response": {"status": 200, "body": {
-      "state": "ready",
-      "game": {"id": "fare_paid", "name": "Fare Paid", "params": {"cooldown": 60000, "points": 1}, "status": {"cooldown_ms": 60000}}
-    }}
+    "request": {
+      "method": "POST",
+      "path": "/api/game/select",
+      "body": {
+        "id": "fare_paid",
+        "params": {
+          "cooldown": 60000
+        }
+      }
+    },
+    "response": {
+      "status": 200,
+      "body": {
+        "state": "ready",
+        "game": {
+          "id": "fare_paid",
+          "name": "Fare Paid",
+          "params": {
+            "cooldown": 60000,
+            "points": 1
+          },
+          "status": {
+            "cooldown_ms": 60000
+          }
+        }
+      }
+    }
   },
   {
     "name": "select_game_bad_param",
-    "request": {"method": "POST", "path": "/api/game/select", "body": {"id": "fare_paid", "params": {"points": 0}}},
-    "response": {"status": 400, "body": {"error": "points must be between 1 and 100"}}
+    "request": {
+      "method": "POST",
+      "path": "/api/game/select",
+      "body": {
+        "id": "fare_paid",
+        "params": {
+          "points": 0
+        }
+      }
+    },
+    "response": {
+      "status": 400,
+      "body": {
+        "error": "points must be between 1 and 100"
+      }
+    }
   },
   {
     "name": "select_unknown_game",
-    "request": {"method": "POST", "path": "/api/game/select", "body": {"id": "pinball"}},
-    "response": {"status": 404, "body": {"error": "unknown game: pinball"}}
+    "request": {
+      "method": "POST",
+      "path": "/api/game/select",
+      "body": {
+        "id": "pinball"
+      }
+    },
+    "response": {
+      "status": 404,
+      "body": {
+        "error": "unknown game: pinball"
+      }
+    }
   },
   {
     "name": "start_game",
-    "setup": [{"method": "POST", "path": "/api/game/select", "body": {"id": "fare_paid"}}],
-    "request": {"method": "POST", "path": "/api/game/start"},
-    "response": {"status": 200, "body": {"state": "running", "game": {"id": "fare_paid"}}}
+    "setup": [
+      {
+        "method": "POST",
+        "path": "/api/game/select",
+        "body": {
+          "id": "fare_paid"
+        }
+      }
+    ],
+    "request": {
+      "method": "POST",
+      "path": "/api/game/start"
+    },
+    "response": {
+      "status": 200,
+      "body": {
+        "state": "running",
+        "game": {
+          "id": "fare_paid"
+        }
+      }
+    }
   },
   {
     "name": "start_without_game",
-    "request": {"method": "POST", "path": "/api/game/start"},
-    "response": {"status": 409, "body": {"error": "no game selected"}}
+    "request": {
+      "method": "POST",
+      "path": "/api/game/start"
+    },
+    "response": {
+      "status": 409,
+      "body": {
+        "error": "no game selected"
+      }
+    }
   },
   {
     "name": "sim_tap_accepted",
     "setup": [
-      {"method": "POST", "path": "/api/game/select", "body": {"id": "fare_paid"}},
-      {"method": "POST", "path": "/api/game/start"}
+      {
+        "method": "POST",
+        "path": "/api/game/select",
+        "body": {
+          "id": "fare_paid"
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/game/start"
+      }
     ],
-    "request": {"method": "POST", "path": "/api/sim/tap", "body": {"uid": "04A1B2C3D4E5F6"}},
-    "response": {"status": 200, "body": {
-      "seq": 1, "t": 1000, "wall_ms": 0, "uid": "04A1B2C3D4E5F6", "player": 1, "name": "Rider 1",
-      "outcome": "accepted", "points": 1, "balance": 1, "multiplier": 1.0,
-      "headline": "FARE PAID", "detail": "+1 pts · Balance 1"
-    }}
+    "request": {
+      "method": "POST",
+      "path": "/api/sim/tap",
+      "body": {
+        "uid": "04A1B2C3D4E5F6"
+      }
+    },
+    "response": {
+      "status": 200,
+      "body": {
+        "seq": 1,
+        "t": 1000,
+        "wall_ms": 0,
+        "uid": "04A1B2C3D4E5F6",
+        "player": 1,
+        "name": "Rider 1",
+        "outcome": "accepted",
+        "points": 1,
+        "balance": 1,
+        "multiplier": 1.0,
+        "headline": "FARE PAID",
+        "detail": "+1 pts \u00b7 Balance 1"
+      }
+    }
   },
   {
     "name": "sim_tap_cooldown",
     "setup": [
-      {"method": "POST", "path": "/api/game/select", "body": {"id": "fare_paid"}},
-      {"method": "POST", "path": "/api/game/start"},
-      {"method": "POST", "path": "/api/sim/tap", "body": {"uid": "04A1B2C3D4E5F6"}}
+      {
+        "method": "POST",
+        "path": "/api/game/select",
+        "body": {
+          "id": "fare_paid"
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/game/start"
+      },
+      {
+        "method": "POST",
+        "path": "/api/sim/tap",
+        "body": {
+          "uid": "04A1B2C3D4E5F6"
+        }
+      }
     ],
-    "request": {"method": "POST", "path": "/api/sim/tap", "body": {"uid": "04A1B2C3D4E5F6"}},
-    "response": {"status": 200, "body": {"outcome": "cooldown", "points": 0, "balance": 1, "headline": "TRANSFER", "detail": "Next fare in 5:00"}}
+    "request": {
+      "method": "POST",
+      "path": "/api/sim/tap",
+      "body": {
+        "uid": "04A1B2C3D4E5F6"
+      }
+    },
+    "response": {
+      "status": 200,
+      "body": {
+        "outcome": "cooldown",
+        "points": 0,
+        "balance": 1,
+        "headline": "TRANSFER",
+        "detail": "Next fare in 5:00"
+      }
+    }
   },
   {
     "name": "sim_tap_closed",
-    "request": {"method": "POST", "path": "/api/sim/tap", "body": {"uid": "04A1B2C3D4E5F6"}},
-    "response": {"status": 200, "body": {"outcome": "closed", "player": 0, "headline": "NOT IN SERVICE"}}
+    "request": {
+      "method": "POST",
+      "path": "/api/sim/tap",
+      "body": {
+        "uid": "04A1B2C3D4E5F6"
+      }
+    },
+    "response": {
+      "status": 200,
+      "body": {
+        "outcome": "closed",
+        "player": 0,
+        "headline": "NOT IN SERVICE"
+      }
+    }
   },
   {
     "name": "taps_feed",
     "setup": [
-      {"method": "POST", "path": "/api/game/select", "body": {"id": "fare_paid"}},
-      {"method": "POST", "path": "/api/game/start"},
-      {"method": "POST", "path": "/api/sim/tap", "body": {"uid": "04000001"}},
-      {"method": "POST", "path": "/api/sim/tap", "body": {"uid": "04000002"}}
+      {
+        "method": "POST",
+        "path": "/api/game/select",
+        "body": {
+          "id": "fare_paid"
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/game/start"
+      },
+      {
+        "method": "POST",
+        "path": "/api/sim/tap",
+        "body": {
+          "uid": "04000001"
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/sim/tap",
+        "body": {
+          "uid": "04000002"
+        }
+      }
     ],
-    "request": {"method": "GET", "path": "/api/taps?limit=5", "auth": false},
-    "response": {"status": 200, "body": {"taps": [{"seq": 2, "uid": "04000002"}, {"seq": 1, "uid": "04000001"}]}}
+    "request": {
+      "method": "GET",
+      "path": "/api/taps?limit=5",
+      "auth": false
+    },
+    "response": {
+      "status": 200,
+      "body": {
+        "taps": [
+          {
+            "seq": 2,
+            "uid": "04000002"
+          },
+          {
+            "seq": 1,
+            "uid": "04000001"
+          }
+        ]
+      }
+    }
   },
   {
     "name": "board",
     "setup": [
-      {"method": "POST", "path": "/api/game/select", "body": {"id": "fare_paid", "params": {"cooldown": 0}}},
-      {"method": "POST", "path": "/api/game/start"},
-      {"method": "POST", "path": "/api/players", "body": {"uid": "04000001", "name": "Ghost"}},
-      {"method": "POST", "path": "/api/players", "body": {"uid": "04000002", "name": "Witch"}},
-      {"method": "PATCH", "path": "/api/players/2", "body": {"team": "Sounder"}},
-      {"method": "POST", "path": "/api/sim/tap", "body": {"uid": "04000002"}},
-      {"method": "POST", "path": "/api/sim/tap", "body": {"uid": "04000002"}},
-      {"method": "POST", "path": "/api/sim/tap", "body": {"uid": "04000001"}}
+      {
+        "method": "POST",
+        "path": "/api/game/select",
+        "body": {
+          "id": "fare_paid",
+          "params": {
+            "cooldown": 0
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/game/start"
+      },
+      {
+        "method": "POST",
+        "path": "/api/players",
+        "body": {
+          "uid": "04000001",
+          "name": "Ghost"
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/players",
+        "body": {
+          "uid": "04000002",
+          "name": "Witch"
+        }
+      },
+      {
+        "method": "PATCH",
+        "path": "/api/players/2",
+        "body": {
+          "team": "Sounder"
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/sim/tap",
+        "body": {
+          "uid": "04000002"
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/sim/tap",
+        "body": {
+          "uid": "04000002"
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/sim/tap",
+        "body": {
+          "uid": "04000001"
+        }
+      }
     ],
-    "request": {"method": "GET", "path": "/api/board", "auth": false},
-    "response": {"status": 200, "body": {
-      "board": [
-        {"rank": 1, "no": 2, "name": "Witch", "team": "Sounder", "points": 2},
-        {"rank": 2, "no": 1, "name": "Ghost", "team": "", "points": 1}
-      ],
-      "teams": [{"team": "Sounder", "points": 2}]
-    }}
+    "request": {
+      "method": "GET",
+      "path": "/api/board",
+      "auth": false
+    },
+    "response": {
+      "status": 200,
+      "body": {
+        "board": [
+          {
+            "rank": 1,
+            "no": 2,
+            "name": "Witch",
+            "team": "Sounder",
+            "points": 2
+          },
+          {
+            "rank": 2,
+            "no": 1,
+            "name": "Ghost",
+            "team": "",
+            "points": 1
+          }
+        ],
+        "teams": [
+          {
+            "team": "Sounder",
+            "points": 2
+          }
+        ]
+      }
+    }
+  },
+  {
+    "name": "lottery_draw",
+    "setup": [
+      {
+        "method": "POST",
+        "path": "/api/game/select",
+        "body": {
+          "id": "lottery",
+          "params": {
+            "cooldown": 0
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/game/start"
+      },
+      {
+        "method": "POST",
+        "path": "/api/players",
+        "body": {
+          "uid": "04000001",
+          "name": "Ghost"
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/sim/tap",
+        "body": {
+          "uid": "04000001"
+        }
+      }
+    ],
+    "request": {
+      "method": "POST",
+      "path": "/api/game/action",
+      "body": {
+        "action": "draw"
+      }
+    },
+    "response": {
+      "status": 200,
+      "body": {
+        "winner": 1,
+        "name": "Ghost",
+        "tickets": 1,
+        "pool": 1,
+        "draw": 1
+      }
+    }
+  },
+  {
+    "name": "game_action_unknown",
+    "setup": [
+      {
+        "method": "POST",
+        "path": "/api/game/select",
+        "body": {
+          "id": "fare_paid"
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/game/start"
+      }
+    ],
+    "request": {
+      "method": "POST",
+      "path": "/api/game/action",
+      "body": {
+        "action": "draw"
+      }
+    },
+    "response": {
+      "status": 404,
+      "body": {
+        "error": "unknown action: draw"
+      }
+    }
   },
   {
     "name": "stop_game",
     "setup": [
-      {"method": "POST", "path": "/api/game/select", "body": {"id": "fare_paid"}},
-      {"method": "POST", "path": "/api/game/start"}
+      {
+        "method": "POST",
+        "path": "/api/game/select",
+        "body": {
+          "id": "fare_paid"
+        }
+      },
+      {
+        "method": "POST",
+        "path": "/api/game/start"
+      }
     ],
-    "request": {"method": "POST", "path": "/api/game/stop"},
-    "response": {"status": 200, "body": {"state": "ended"}}
+    "request": {
+      "method": "POST",
+      "path": "/api/game/stop"
+    },
+    "response": {
+      "status": 200,
+      "body": {
+        "state": "ended"
+      }
+    }
   },
   {
     "name": "pause_when_not_running",
-    "setup": [{"method": "POST", "path": "/api/game/select", "body": {"id": "fare_paid"}}],
-    "request": {"method": "POST", "path": "/api/game/pause"},
-    "response": {"status": 409, "body": {"error": "game is not running"}}
+    "setup": [
+      {
+        "method": "POST",
+        "path": "/api/game/select",
+        "body": {
+          "id": "fare_paid"
+        }
+      }
+    ],
+    "request": {
+      "method": "POST",
+      "path": "/api/game/pause"
+    },
+    "response": {
+      "status": 409,
+      "body": {
+        "error": "game is not running"
+      }
+    }
   }
 ]

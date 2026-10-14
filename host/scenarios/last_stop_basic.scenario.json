@@ -1,0 +1,15 @@
+{
+  "game": "last_stop",
+  "params": {"interval": 30000, "points": 1, "cooldown": 60000},
+  "seed": 1,
+  "players": [{"name": "Ghost"}, {"name": "Witch"}],
+  "steps": [
+    {"at": "0s", "tap": "Ghost"},
+    {"at": "10s", "tap": "Ghost", "expect": {"outcome": "rejected"}},
+    {"at": "1m45s", "tap": "Witch", "expect": {"score": {"Ghost": 3}}},
+    {"at": "1m50s", "tap": "Ghost", "expect": {"outcome": "accepted"}},
+    {"at": "2m20s", "expect": {"score": {"Ghost": 4, "Witch": 0}}},
+    {"at": "2m30s", "reboot": true},
+    {"at": "3m20s", "expect": {"score": {"Ghost": 6}}}
+  ]
+}

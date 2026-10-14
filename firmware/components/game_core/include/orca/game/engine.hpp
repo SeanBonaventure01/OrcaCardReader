@@ -70,6 +70,7 @@ class Engine : public GameEffects {
   void resume();
   void stop();
   void reset();  // clears scores and game state; keeps players and the selected game
+  json game_action(const std::string& action, const json& args);  // one of the game's actions
   EventWindow trigger_event(EventKind kind, const std::string& name, TimeMs duration, double multiplier);
   void end_events();
   Player& enroll(const std::string& uid, const std::string& name = "");

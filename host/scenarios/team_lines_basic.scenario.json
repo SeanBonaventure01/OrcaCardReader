@@ -1,0 +1,13 @@
+{
+  "game": "team_lines",
+  "params": {"teams": "1 Line, Sounder", "cooldown": 60000},
+  "seed": 1,
+  "players": [{"name": "Ghost"}, {"name": "Witch"}, {"name": "Bat", "team": "Sounder"}],
+  "steps": [
+    {"at": "0s", "tap": "Ghost"},
+    {"at": "5s", "tap": "Witch"},
+    {"at": "10s", "tap": "Bat"},
+    {"at": "1m10s", "tap": "Bat", "expect": {"score": {"Ghost": 1, "Witch": 1, "Bat": 2}}},
+    {"at": "1m10s", "api": ["GET", "/api/board"]}
+  ]
+}

@@ -15,7 +15,7 @@ ParamSchema FarePaid::base_params() {
 
 FarePaid::FarePaid()
     : FarePaid(GameInfo{"fare_paid", "Fare Paid", "Tap to pay your fare: 1 point per tap, then a cooldown.",
-                        base_params()}) {}
+                        base_params(), {}}) {}
 
 FarePaid::FarePaid(GameInfo info) : info_(std::move(info)) {}
 
@@ -32,7 +32,9 @@ TimeMs FarePaid::cooldown_left(int number, TimeMs now) const {
   return left > 0 ? left : 0;
 }
 
-Feedback FarePaid::on_tap(GameContext& ctx, Player& player) {
+Feedback FarePaid::on_tap(GameContext& ctx, Player& player) { return fare(ctx, player); }
+
+Feedback FarePaid::fare(GameContext& ctx, Player& player) {
   Feedback fb;
   const TimeMs left = cooldown_left(player.number, ctx.now);
   if (left > 0 && !ctx.events.cooldown_waived(ctx.now)) {
@@ -63,7 +65,7 @@ void FarePaid::restore(const json& j) {
 
 RushHour::RushHour()
     : FarePaid(GameInfo{"rush_hour", "Rush Hour",
-                        "Fare Paid with surprise rush hours: points are multiplied while they last.", {}}) {
+                        "Fare Paid with surprise rush hours: points are multiplied while they last.", {}, {}}) {
   info_.params = base_params();
   info_.params.push_back({"every", "Average time between rush hours", ParamType::Duration, minutes(15),
                           static_cast<double>(minutes(1)), static_cast<double>(minutes(120)), {}, ""});

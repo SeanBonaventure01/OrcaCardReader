@@ -1,0 +1,22 @@
+{"out":{"detail":"NOT IN SERVICE","headline":"Team Lines","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":0}
+{"out":{"id":"start","out":"sound"},"t":0}
+{"out":{"duration_ms":0,"effect":"idle_breathe","out":"leds"},"t":0}
+{"out":{"detail":"TAP CARD HERE","headline":"Team Lines","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":0}
+{"out":{"id":"accept","out":"sound"},"t":0}
+{"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":0}
+{"out":{"detail":"1 Line +1 - Team total 1","headline":"FARE PAID","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#01 Ghost","tone":"success"},"t":0}
+{"result":{"balance":1,"detail":"1 Line +1 - Team total 1","headline":"FARE PAID","multiplier":1.0,"name":"Ghost","outcome":"accepted","player":1,"points":1,"seq":1,"t":0,"uid":"04000000000001"},"t":0,"tap":"Ghost"}
+{"out":{"id":"accept","out":"sound"},"t":5000}
+{"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":5000}
+{"out":{"detail":"1 Line +1 - Team total 2","headline":"FARE PAID","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#02 Witch","tone":"success"},"t":5000}
+{"result":{"balance":1,"detail":"1 Line +1 - Team total 2","headline":"FARE PAID","multiplier":1.0,"name":"Witch","outcome":"accepted","player":2,"points":1,"seq":2,"t":5000,"uid":"04000000000002"},"t":5000,"tap":"Witch"}
+{"out":{"id":"accept","out":"sound"},"t":10000}
+{"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":10000}
+{"out":{"detail":"Sounder +1 - Team total 1","headline":"FARE PAID","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#03 Bat","tone":"success"},"t":10000}
+{"result":{"balance":1,"detail":"Sounder +1 - Team total 1","headline":"FARE PAID","multiplier":1.0,"name":"Bat","outcome":"accepted","player":3,"points":1,"seq":3,"t":10000,"uid":"04000000000003"},"t":10000,"tap":"Bat"}
+{"out":{"id":"accept","out":"sound"},"t":70000}
+{"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":70000}
+{"out":{"detail":"Sounder +1 - Team total 2","headline":"FARE PAID","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#03 Bat","tone":"success"},"t":70000}
+{"result":{"balance":2,"detail":"Sounder +1 - Team total 2","headline":"FARE PAID","multiplier":1.0,"name":"Bat","outcome":"accepted","player":3,"points":1,"seq":4,"t":70000,"uid":"04000000000003"},"t":70000,"tap":"Bat"}
+{"expect":{"score":{"Bat":2,"Ghost":1,"Witch":1}},"ok":true,"t":70000}
+{"api":["GET","/api/board"],"status":200,"t":70000}

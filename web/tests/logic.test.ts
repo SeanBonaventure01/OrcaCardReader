@@ -101,6 +101,24 @@ describe('paramForm (schema from the games_list fixture)', () => {
   });
 });
 
+describe('gameStatusLine', () => {
+  const base = materialize(fixtures.get('status_initial')!.response.body) as Status;
+  const withGame = (status: Record<string, unknown>): Status => ({
+    ...base,
+    game: { id: 'x', name: 'X', params: {}, status },
+  });
+  it('describes each game that has its own state', async () => {
+    const { gameStatusLine } = await import('../src/components/LivePage');
+    expect(gameStatusLine(base)).toBeNull();
+    expect(gameStatusLine(withGame({ holder_name: 'Ghost' }))).toBe('On the bus: Ghost');
+    expect(gameStatusLine(withGame({ holder: null, holder_name: null }))).toBeNull();
+    expect(gameStatusLine(withGame({ inspecting: true, checked: 3 }))).toBe('Fare inspection in progress (3 checked)');
+    expect(gameStatusLine(withGame({ inspecting: false }))).toBeNull();
+    expect(gameStatusLine(withGame({ winners: [{ no: 1, name: 'A' }, { no: 4, name: 'B' }] }))).toBe('Winners: #1 A, #4 B');
+    expect(gameStatusLine(withGame({ winners: [] }))).toBeNull();
+  });
+});
+
 describe('live reducer', () => {
   const status = materialize(fixtures.get('status_initial')!.response.body) as Status;
   const tap = materialize(fixtures.get('sim_tap_accepted')!.response.body) as TapRecord;

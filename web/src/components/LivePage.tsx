@@ -2,11 +2,49 @@ import { useEffect, useState } from 'preact/hooks';
 
 import { availableActions, mmss, multiplierLabel, outcomeTone, randomUid, stateLabel } from '../format';
 import { engineNow } from '../live';
-import { act, api, live } from '../store';
-import type { Player } from '../types';
+import { act, api, live, notify } from '../store';
+import type { GameInfo, Player, Status } from '../types';
 import { Card, EventBadge, Leaderboard, useNow } from './common';
 
 const actionLabel = { start: 'Start', pause: 'Pause', resume: 'Resume', stop: 'Stop', reset: 'Reset scores' } as const;
+
+// One line about the game's own state, for the games that have some.
+export function gameStatusLine(s: Status): string | null {
+  const g = s.game?.status ?? {};
+  if (typeof g.holder_name === 'string') return `On the bus: ${g.holder_name}`;
+  if (g.inspecting === true) return `Fare inspection in progress (${String(g.checked ?? 0)} checked)`;
+  if (Array.isArray(g.winners) && g.winners.length)
+    return `Winners: ${(g.winners as { no: number; name: string }[]).map((w) => `#${w.no} ${w.name}`).join(', ')}`;
+  return null;
+}
+
+let gamesCache: GameInfo[] | null = null;
+
+function GameActions({ gameId }: { gameId: string }) {
+  const [games, setGames] = useState<GameInfo[]>(gamesCache ?? []);
+  useEffect(() => {
+    if (!gamesCache) api.games().then((g) => setGames((gamesCache = g))).catch(() => {});
+  }, []);
+  const actions = games.find((g) => g.id === gameId)?.actions ?? [];
+  return (
+    <>
+      {actions.map((a) => (
+        <button
+          key={a.id}
+          class="primary"
+          title={a.help}
+          data-testid={`game-action-${a.id}`}
+          onClick={async () => {
+            const r = await act(() => api.gameActionCustom(a.id));
+            if (r && typeof r.name === 'string') notify(`Winner: #${String(r.winner)} ${r.name}`);
+          }}
+        >
+          {a.label}
+        </button>
+      ))}
+    </>
+  );
+}
 
 function GameCard() {
   const s = live.value.status;
@@ -39,6 +77,11 @@ function GameCard() {
           ))}
         </div>
       )}
+      {gameStatusLine(s) && (
+        <p data-testid="game-status-line">
+          <strong>{gameStatusLine(s)}</strong>
+        </p>
+      )}
       {s.state === 'running' && s.next_event_in_ms !== null && s.events.length === 0 && (
         <p class="muted">Next surprise event in about {mmss(s.next_event_in_ms - (now - live.value.statusAt))}</p>
       )}
@@ -53,6 +96,7 @@ function GameCard() {
             {actionLabel[a]}
           </button>
         ))}
+        {s.game && s.state !== 'ready' && <GameActions gameId={s.game.id} />}
         {s.state === 'none' && <a href="#/games">Pick a game</a>}
       </div>
     </Card>

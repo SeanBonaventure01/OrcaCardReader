@@ -1,5 +1,6 @@
 #include "orca/game/engine.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdio>
 
@@ -109,6 +110,15 @@ std::string Engine::fill(const std::string& tmpl, const TapRecord& r) const {
   replace_all(s, "{name}", r.name);
   replace_all(s, "{no}", std::to_string(r.player));
   replace_all(s, "{mult}", format_mult(r.multiplier));
+  if (s.find("{team") != std::string::npos) {
+    const Player* p = players_.find(r.player);
+    const std::string team = p ? p->team : "";
+    std::int64_t total = 0;
+    for (const auto& [t, pts] : scores_.team_totals(players_))
+      if (t == team) total = pts;
+    replace_all(s, "{team_total}", std::to_string(total));
+    replace_all(s, "{team}", team);
+  }
   return s;
 }
 
@@ -137,7 +147,9 @@ TapRecord Engine::tap(const std::string& uid_in) {
       fb.outcome = Outcome::Banned;
     } else {
       GameContext c = ctx();
+      const std::string team_before = player->team;
       fb = game_->on_tap(c, *player);
+      if (player->team != team_before) broadcast(json{{"type", "players"}});  // game assigned a team
     }
   }
 
@@ -210,7 +222,8 @@ void Engine::handle_event_changes(const EventScheduler::Changes& ch) {
                     format_mmss(w.end - w.start).c_str());
     else
       std::snprintf(detail, sizeof detail, "For %s", format_mmss(w.end - w.start).c_str());
-    announce(w.name, detail, hal::Tone::Bonus, fx::kEventStartSound, fx::kEventLeds);
+    // Custom events belong to the game, which announces them itself.
+    if (w.kind != EventKind::Custom) announce(w.name, detail, hal::Tone::Bonus, fx::kEventStartSound, fx::kEventLeds);
     if (game_) game_->on_event(c, w, true);
     broadcast(json{{"type", "event"}, {"action", "start"}, {"event", w}});
   }
@@ -314,6 +327,20 @@ void Engine::reset() {
   show_idle();
   broadcast_state();
   broadcast_scores_if_changed();
+}
+
+json Engine::game_action(const std::string& action, const json& args) {
+  require_game();
+  const auto& actions = game_->info().actions;
+  if (std::none_of(actions.begin(), actions.end(), [&](const GameAction& a) { return a.id == action; }))
+    throw EngineError(404, "unknown action: " + action);
+  if (state_ == GameState::None || state_ == GameState::Ready) throw EngineError(409, "start the game first");
+  GameContext c = ctx();
+  json result = game_->on_action(c, action, args);
+  touch();
+  broadcast_scores_if_changed();
+  broadcast_state();
+  return result;
 }
 
 EventWindow Engine::trigger_event(EventKind kind, const std::string& name, TimeMs duration, double multiplier) {
@@ -471,7 +498,15 @@ json Engine::board_json(std::size_t limit) const {
 json Engine::games_json() const {
   json arr = json::array();
   for (const GameInfo* g : games_.all())
-    arr.push_back({{"id", g->id}, {"name", g->name}, {"description", g->description}, {"params", schema_to_json(g->params)}});
+  {
+    json actions = json::array();
+    for (const auto& a : g->actions) actions.push_back({{"id", a.id}, {"label", a.label}, {"help", a.help}});
+    arr.push_back({{"id", g->id},
+                   {"name", g->name},
+                   {"description", g->description},
+                   {"params", schema_to_json(g->params)},
+                   {"actions", actions}});
+  }
   return arr;
 }
 

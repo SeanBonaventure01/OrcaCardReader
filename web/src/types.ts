@@ -72,11 +72,18 @@ export interface ParamSpec {
   help?: string;
 }
 
+export interface GameAction {
+  id: string;
+  label: string;
+  help: string;
+}
+
 export interface GameInfo {
   id: string;
   name: string;
   description: string;
   params: ParamSpec[];
+  actions: GameAction[];
 }
 
 export interface Player {

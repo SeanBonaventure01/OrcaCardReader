@@ -109,6 +109,9 @@ export class ApiClient {
     });
   gameAction = (action: 'start' | 'pause' | 'resume' | 'stop' | 'reset') =>
     this.request<Status>('POST', `/api/game/${action}`);
+  // A game-specific action, e.g. Lottery's "draw". Returns the game's result object.
+  gameActionCustom = (action: string, args?: Record<string, unknown>) =>
+    this.request<Record<string, unknown>>('POST', '/api/game/action', args ? { action, args } : { action });
   players = () => this.request<{ players: Player[] }>('GET', '/api/players').then((r) => r.players);
   enroll = (uid: string, name?: string) =>
     this.request<Player>('POST', '/api/players', name ? { uid, name } : { uid });

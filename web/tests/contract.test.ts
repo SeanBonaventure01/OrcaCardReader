@@ -25,6 +25,8 @@ const calls: Record<string, (c: ApiClient) => Promise<unknown>> = {
   taps_feed: (c) => c.taps(5),
   board: (c) => c.board(),
   stop_game: (c) => c.gameAction('stop'),
+  lottery_draw: (c) => c.gameActionCustom('draw'),
+  game_action_unknown: (c) => c.gameActionCustom('draw'),
   pause_when_not_running: (c) => c.gameAction('pause'),
   players_empty: (c) => c.players(),
   enroll_player: (c) => c.enroll('04:a1:b2:c3', 'Ghost'),
@@ -110,7 +112,7 @@ describe('API contract fixtures', () => {
 
   it('unwraps list responses', async () => {
     expect(((await run(fixtures.get('players_list')!)).result as unknown[]).length).toBe(2);
-    expect(((await run(fixtures.get('games_list')!)).result as unknown[]).length).toBe(2);
+    expect(((await run(fixtures.get('games_list')!)).result as unknown[]).length).toBe(6);
     expect(((await run(fixtures.get('taps_feed')!)).result as unknown[]).length).toBe(2);
   });
 });

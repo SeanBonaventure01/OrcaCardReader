@@ -1,3 +1,4 @@
+// Runs first (specs share one orca-sim and run in file-name order).
 // A night at the party, as the operator sees it on their phone. Steps share one simulated
 // costume (orca-sim at 20x speed), so they run in order.
 import { expect, type Page, test } from '@playwright/test';

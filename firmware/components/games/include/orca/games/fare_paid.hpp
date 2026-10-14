@@ -28,6 +28,10 @@ class FarePaid : public Game {
   explicit FarePaid(GameInfo info);
   static ParamSchema base_params();
 
+  // The Fare Paid rule shared by derived games: Accepted (+points, starts the cooldown) or
+  // Cooldown ("Next fare in m:ss"). Cooldown waivers are honoured.
+  Feedback fare(GameContext& ctx, Player& player);
+
   GameInfo info_;
   json params_;
   TimeMs cooldown_ = 0;

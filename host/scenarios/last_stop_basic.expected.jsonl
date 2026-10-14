@@ -1,0 +1,28 @@
+{"out":{"detail":"NOT IN SERVICE","headline":"Last Stop","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":0}
+{"out":{"id":"start","out":"sound"},"t":0}
+{"out":{"duration_ms":0,"effect":"idle_breathe","out":"leds"},"t":0}
+{"out":{"detail":"TAP CARD HERE","headline":"Last Stop","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":0}
+{"out":{"id":"accept","out":"sound"},"t":0}
+{"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":0}
+{"out":{"detail":"You're on the bus!","headline":"ALL ABOARD","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#01 Ghost","tone":"success"},"t":0}
+{"result":{"balance":0,"detail":"You're on the bus!","headline":"ALL ABOARD","multiplier":1.0,"name":"Ghost","outcome":"accepted","player":1,"points":0,"seq":1,"t":0,"uid":"04000000000001"},"t":0,"tap":"Ghost"}
+{"out":{"id":"reject","out":"sound"},"t":10000}
+{"out":{"duration_ms":2500,"effect":"reject_flash","out":"leds"},"t":10000}
+{"out":{"detail":"Next stop in 0:20","headline":"STILL ON THE BUS","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#01 Ghost","tone":"error"},"t":10000}
+{"result":{"balance":0,"detail":"Next stop in 0:20","headline":"STILL ON THE BUS","multiplier":1.0,"name":"Ghost","outcome":"rejected","player":1,"points":0,"seq":2,"t":10000,"uid":"04000000000001"},"t":10000,"tap":"Ghost"}
+{"expect":{"outcome":"rejected"},"ok":true,"t":10000}
+{"out":{"id":"accept","out":"sound"},"t":105000}
+{"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":105000}
+{"out":{"detail":"You took the bus from Ghost","headline":"ALL ABOARD","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#02 Witch","tone":"success"},"t":105000}
+{"result":{"balance":0,"detail":"You took the bus from Ghost","headline":"ALL ABOARD","multiplier":1.0,"name":"Witch","outcome":"accepted","player":2,"points":0,"seq":3,"t":105000,"uid":"04000000000002"},"t":105000,"tap":"Witch"}
+{"expect":{"score":{"Ghost":3}},"ok":true,"t":105000}
+{"out":{"id":"accept","out":"sound"},"t":110000}
+{"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":110000}
+{"out":{"detail":"You took the bus from Witch","headline":"ALL ABOARD","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#01 Ghost","tone":"success"},"t":110000}
+{"result":{"balance":3,"detail":"You took the bus from Witch","headline":"ALL ABOARD","multiplier":1.0,"name":"Ghost","outcome":"accepted","player":1,"points":0,"seq":4,"t":110000,"uid":"04000000000001"},"t":110000,"tap":"Ghost"}
+{"expect":{"outcome":"accepted"},"ok":true,"t":110000}
+{"expect":{"score":{"Ghost":4,"Witch":0}},"ok":true,"t":140000}
+{"reboot":true,"t":150000}
+{"out":{"detail":"TAP CARD HERE","headline":"Last Stop","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":150000}
+{"out":{"detail":"Scores are safe","headline":"SERVICE RESTORED","hold_ms":4000,"kind":"banner","note":"","out":"screen","player":"","tone":"neutral"},"t":150000}
+{"expect":{"score":{"Ghost":6}},"ok":true,"t":200000}
