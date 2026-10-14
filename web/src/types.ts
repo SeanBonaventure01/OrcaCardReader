@@ -106,6 +106,7 @@ export interface DeviceOutput {
   headline?: string;
   detail?: string;
   player?: string;
+  note?: string;
   id?: string;
   effect?: string;
 }

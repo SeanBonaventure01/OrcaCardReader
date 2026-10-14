@@ -7,7 +7,7 @@ PORT       ?= $(firstword $(wildcard /dev/cu.usbserial-*))
 HOST_BUILD := host/build
 
 
-.PHONY: web-test web-e2e web-build
+.PHONY: web-test web-e2e web-build hil app-flash
 .PHONY: check portable host-test host-configure fw-build flash monitor clean sim repl scenarios scenarios-update props-long
 
 check: portable host-test web-test web-e2e fw-build
@@ -59,7 +59,7 @@ web-test: web/node_modules
 web-e2e: web/node_modules host-test
 	cd web && npx playwright test
 
-fw-build:
+fw-build: web-build
 	@if [ -f $(IDF_PATH)/export.sh ]; then \
 		$(IDF_EXPORT) && idf.py -C firmware build; \
 	else \
@@ -68,6 +68,17 @@ fw-build:
 
 flash:
 	$(IDF_EXPORT) && idf.py -C firmware -p $(PORT) -b 460800 flash
+
+# Flash just the app (keeps the storage partition: config, settings, snapshot)
+app-flash: fw-build
+	$(IDF_EXPORT) && idf.py -C firmware -p $(PORT) -b 460800 app-flash
+
+tools/hil/.venv:
+	python3 -m venv tools/hil/.venv && tools/hil/.venv/bin/pip install -q -r tools/hil/requirements.txt
+
+# Hardware-in-the-loop: flash the board, then drive it over serial and check the screen by webcam
+hil: app-flash tools/hil/.venv
+	tools/hil/.venv/bin/python tools/hil/smoke.py
 
 monitor:
 	$(IDF_EXPORT) && idf.py -C firmware -p $(PORT) monitor

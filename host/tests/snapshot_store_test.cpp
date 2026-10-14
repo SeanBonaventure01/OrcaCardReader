@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <unistd.h>
 
 #include "orca/fakes/mem_file_system.hpp"
 #include "orca/game/snapshot_store.hpp"
@@ -68,4 +69,27 @@ TEST(SnapshotStore, NothingSaved) {
   EXPECT_EQ(store.loaded_from(), "");
   fs.files["/s.json"] = "[1,2,3]";  // valid JSON but not an object
   EXPECT_FALSE(store.load());
+}
+
+// The real file-system implementation (used by orca-sim and the device), on a temp dir.
+#include <filesystem>
+
+#include "orca/hal/posix_file_system.hpp"
+
+TEST(PosixFileSystem, SnapshotRotationOnRealFiles) {
+  const auto dir = std::filesystem::temp_directory_path() / ("orca-fs-test-" + std::to_string(::getpid()));
+  std::filesystem::create_directories(dir);
+  orca::hal::PosixFileSystem fs(dir.string());
+  SnapshotStore store(fs, "/state.json");
+  ASSERT_TRUE(store.save({{"n", 1}}));
+  ASSERT_TRUE(store.save({{"n", 2}}));  // rename onto existing .bak must work
+  ASSERT_TRUE(store.save({{"n", 3}}));
+  EXPECT_EQ((*store.load())["n"], 3);
+  EXPECT_EQ(json::parse(*fs.read("/state.json.bak"))["n"], 2);
+  EXPECT_FALSE(fs.exists("/state.json.tmp"));
+  EXPECT_TRUE(fs.append("/log.csv", "a\n"));
+  EXPECT_TRUE(fs.append("/log.csv", "b\n"));
+  EXPECT_EQ(*fs.read("/log.csv"), "a\nb\n");
+  EXPECT_FALSE(fs.rename("/missing", "/x"));
+  std::filesystem::remove_all(dir);
 }

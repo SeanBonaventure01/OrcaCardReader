@@ -21,6 +21,7 @@ struct ScreenCmd {
   std::string detail;
   std::string player_label;  // e.g. "#07 Ghost"
   std::uint32_t hold_ms = 0;
+  std::string note;          // Idle: the active event, e.g. "RUSH HOUR 2x" (empty if none)
 };
 
 struct SoundCmd {

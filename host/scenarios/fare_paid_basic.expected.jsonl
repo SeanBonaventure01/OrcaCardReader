@@ -1,35 +1,35 @@
-{"out":{"detail":"Not in service","headline":"Fare Paid","hold_ms":0,"kind":"idle","out":"screen","player":"","tone":"neutral"},"t":0}
+{"out":{"detail":"NOT IN SERVICE","headline":"Fare Paid","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":0}
 {"out":{"id":"start","out":"sound"},"t":0}
 {"out":{"duration_ms":0,"effect":"idle_breathe","out":"leds"},"t":0}
-{"out":{"detail":"Tap card here","headline":"Fare Paid","hold_ms":0,"kind":"idle","out":"screen","player":"","tone":"neutral"},"t":0}
+{"out":{"detail":"TAP CARD HERE","headline":"Fare Paid","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":0}
 {"out":{"id":"accept","out":"sound"},"t":0}
 {"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":0}
-{"out":{"detail":"+1 pts · Balance 1","headline":"FARE PAID","hold_ms":2500,"kind":"result","out":"screen","player":"#01 Ghost","tone":"success"},"t":0}
+{"out":{"detail":"+1 pts · Balance 1","headline":"FARE PAID","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#01 Ghost","tone":"success"},"t":0}
 {"result":{"balance":1,"detail":"+1 pts · Balance 1","headline":"FARE PAID","multiplier":1.0,"name":"Ghost","outcome":"accepted","player":1,"points":1,"seq":1,"t":0,"uid":"04000000000001"},"t":0,"tap":"Ghost"}
 {"expect":{"outcome":"accepted"},"ok":true,"t":0}
 {"out":{"id":"accept","out":"sound"},"t":10000}
 {"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":10000}
-{"out":{"detail":"+1 pts · Balance 1","headline":"FARE PAID","hold_ms":2500,"kind":"result","out":"screen","player":"#02 Witch","tone":"success"},"t":10000}
+{"out":{"detail":"+1 pts · Balance 1","headline":"FARE PAID","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#02 Witch","tone":"success"},"t":10000}
 {"result":{"balance":1,"detail":"+1 pts · Balance 1","headline":"FARE PAID","multiplier":1.0,"name":"Witch","outcome":"accepted","player":2,"points":1,"seq":2,"t":10000,"uid":"04000000000002"},"t":10000,"tap":"Witch"}
 {"expect":{"outcome":"accepted"},"ok":true,"t":10000}
 {"out":{"id":"reject","out":"sound"},"t":30000}
 {"out":{"duration_ms":2500,"effect":"cooldown_pulse","out":"leds"},"t":30000}
-{"out":{"detail":"Next fare in 4:30","headline":"TRANSFER","hold_ms":2500,"kind":"result","out":"screen","player":"#01 Ghost","tone":"warning"},"t":30000}
+{"out":{"detail":"Next fare in 4:30","headline":"TRANSFER","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#01 Ghost","tone":"warning"},"t":30000}
 {"result":{"balance":1,"detail":"Next fare in 4:30","headline":"TRANSFER","multiplier":1.0,"name":"Ghost","outcome":"cooldown","player":1,"points":0,"seq":3,"t":30000,"uid":"04000000000001"},"t":30000,"tap":"Ghost"}
 {"expect":{"outcome":"cooldown"},"ok":true,"t":30000}
 {"out":{"id":"accept","out":"sound"},"t":300000}
 {"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":300000}
-{"out":{"detail":"+1 pts · Balance 2","headline":"FARE PAID","hold_ms":2500,"kind":"result","out":"screen","player":"#01 Ghost","tone":"success"},"t":300000}
+{"out":{"detail":"+1 pts · Balance 2","headline":"FARE PAID","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#01 Ghost","tone":"success"},"t":300000}
 {"result":{"balance":2,"detail":"+1 pts · Balance 2","headline":"FARE PAID","multiplier":1.0,"name":"Ghost","outcome":"accepted","player":1,"points":1,"seq":4,"t":300000,"uid":"04000000000001"},"t":300000,"tap":"Ghost"}
 {"expect":{"outcome":"accepted"},"ok":true,"t":300000}
 {"expect":{"players":2,"score":{"Ghost":2,"Witch":1},"state":"running"},"ok":true,"t":300000}
 {"out":{"id":"end","out":"sound"},"t":360000}
 {"out":{"duration_ms":4000,"effect":"off","out":"leds"},"t":360000}
-{"out":{"detail":"Winner: Ghost (2 pts)","headline":"END OF THE LINE","hold_ms":4000,"kind":"banner","out":"screen","player":"","tone":"neutral"},"t":360000}
-{"out":{"detail":"End of the line","headline":"Fare Paid","hold_ms":0,"kind":"idle","out":"screen","player":"","tone":"neutral"},"t":360000}
+{"out":{"detail":"Winner: Ghost (2 pts)","headline":"END OF THE LINE","hold_ms":4000,"kind":"banner","note":"","out":"screen","player":"","tone":"neutral"},"t":360000}
+{"out":{"detail":"END OF THE LINE","headline":"Fare Paid","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":360000}
 {"api":["POST","/api/game/stop"],"status":200,"t":360000}
 {"out":{"id":"reject","out":"sound"},"t":360000}
 {"out":{"duration_ms":2000,"effect":"reject_flash","out":"leds"},"t":360000}
-{"out":{"detail":"Waiting for the next trip","headline":"NOT IN SERVICE","hold_ms":2000,"kind":"result","out":"screen","player":"#02 Witch","tone":"neutral"},"t":360000}
+{"out":{"detail":"Waiting for the next trip","headline":"NOT IN SERVICE","hold_ms":2000,"kind":"result","note":"","out":"screen","player":"#02 Witch","tone":"neutral"},"t":360000}
 {"result":{"balance":1,"detail":"Waiting for the next trip","headline":"NOT IN SERVICE","multiplier":1.0,"name":"Witch","outcome":"closed","player":2,"points":0,"seq":5,"t":360000,"uid":"04000000000002"},"t":360000,"tap":"Witch"}
 {"expect":{"outcome":"closed","state":"ended"},"ok":true,"t":360000}

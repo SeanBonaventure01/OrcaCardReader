@@ -21,7 +21,8 @@ class RecordingOutputs : public hal::Outputs {
                    {"headline", c.headline},
                    {"detail", c.detail},
                    {"player", c.player_label},
-                   {"hold_ms", c.hold_ms}});
+                   {"hold_ms", c.hold_ms},
+                   {"note", c.note}});
   }
   void sound(const hal::SoundCmd& c) override {
     sounds.push_back(c.id);

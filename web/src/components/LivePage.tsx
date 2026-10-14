@@ -146,7 +146,7 @@ function DevicePreview() {
       <div class={`device-screen tone-${d.screen?.tone ?? 'neutral'}`} data-testid="device-screen">
         <div class="dev-headline">{d.screen?.headline || 'TAP CARD HERE'}</div>
         <div class="dev-detail">{d.screen?.detail}</div>
-        <div class="dev-player">{d.screen?.player}</div>
+        <div class="dev-player">{d.screen?.player || d.screen?.note}</div>
       </div>
       <p class="muted">
         LEDs: {d.leds ?? 'off'} · last sound: {d.sound ?? 'none'}

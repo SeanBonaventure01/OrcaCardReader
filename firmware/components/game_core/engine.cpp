@@ -80,13 +80,18 @@ void Engine::show_idle() {
   cmd.kind = hal::ScreenKind::Idle;
   cmd.headline = (game_ && state_ != GameState::None) ? games_.find(game_->info().id)->name : "";
   switch (state_) {
-    case GameState::Running: cmd.detail = "Tap card here"; break;
-    case GameState::Paused: cmd.detail = "Paused"; break;
-    case GameState::Ended: cmd.detail = "End of the line"; break;
-    default: cmd.detail = "Not in service"; break;
+    case GameState::Running: cmd.detail = "TAP CARD HERE"; break;
+    case GameState::Paused: cmd.detail = "PAUSED"; break;
+    case GameState::Ended: cmd.detail = "END OF THE LINE"; break;
+    default: cmd.detail = "NOT IN SERVICE"; break;
   }
-  const auto active = events_.active(now());
-  if (state_ == GameState::Running && !active.empty()) cmd.detail = active.front().name;
+  if (state_ == GameState::Running) {
+    for (const auto& w : events_.active(now())) {
+      if (!cmd.note.empty()) cmd.note += " + ";
+      cmd.note += w.name;
+      if (w.kind == EventKind::Multiplier) cmd.note += " " + format_mult(w.multiplier) + "x";
+    }
+  }
   out_.screen(cmd);
 }
 

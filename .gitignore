@@ -23,3 +23,4 @@ tools/hil/artifacts/
 web/test-results/
 web/playwright-report/
 host/build/sim-state.json*
+tools/hil/.venv/

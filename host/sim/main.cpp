@@ -18,7 +18,7 @@
 #include "orca/fakes/fake_clock.hpp"
 #include "orca/fakes/seeded_random.hpp"
 #include "orca/game/snapshot_store.hpp"
-#include "posix_fs.hpp"
+#include "orca/hal/posix_file_system.hpp"
 #include "scenario.hpp"
 #include "sim_server.hpp"
 #include "world.hpp"
@@ -227,7 +227,7 @@ int cmd_serve(int argc, char** argv) {
   sim::SimServer server(world, web);
   world.listeners.push_back([&](const json& m) { server.broadcast(m); });
 
-  sim::PosixFileSystem fs;
+  hal::PosixFileSystem fs;
   game::SnapshotStore store(fs, state);
   if (!state.empty()) {
     if (auto snap = store.load()) {
