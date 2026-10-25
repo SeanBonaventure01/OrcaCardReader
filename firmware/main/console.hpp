@@ -6,6 +6,6 @@
 
 namespace orca::app {
 
-void start_console(api::Api& api, const std::string& admin_pin);
+void start_console(api::Api& api);
 
 }  // namespace orca::app

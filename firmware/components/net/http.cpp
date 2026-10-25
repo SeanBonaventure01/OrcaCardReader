@@ -77,14 +77,6 @@ esp_err_t api_handler(httpd_req_t* req) {
     }
     got += static_cast<std::size_t>(r);
   }
-  const std::string auth = header(req, "Authorization");
-  if (auth.rfind("Bearer ", 0) == 0) {
-    areq.token = auth.substr(7);
-  } else {
-    const auto params = api::Api::parse_query(areq.query);
-    if (auto it = params.find("token"); it != params.end()) areq.token = it->second;
-  }
-
   const api::ApiResponse res = g_api->handle(areq);
   httpd_resp_set_status(req, status_line(res.status));
   httpd_resp_set_type(req, res.content_type.c_str());

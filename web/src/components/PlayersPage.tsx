@@ -56,6 +56,42 @@ function PlayerEditor({ player, teams, onDone }: { player: Player; teams: string
   );
 }
 
+// Before the party: clear out test riders so programmed cards start from #1. Two taps, so
+// it can't happen by accident.
+function RemoveAll({ count, onDone }: { count: number; onDone: () => void }) {
+  const [armed, setArmed] = useState(false);
+  const state = live.value.status?.state;
+  const playing = state === 'running' || state === 'paused';
+  useEffect(() => {
+    if (!armed) return;
+    const id = setTimeout(() => setArmed(false), 5000);
+    return () => clearTimeout(id);
+  }, [armed]);
+  const remove = async () => {
+    const r = await act(() => api.clearPlayers(), 'All riders removed');
+    setArmed(false);
+    if (r) onDone();
+  };
+  return (
+    <Card title="Start fresh">
+      <p class="muted">Removes every rider and score, e.g. test riders before the party. Cards stay programmed.</p>
+      {armed ? (
+        <div class="row">
+          <button class="danger" data-testid="remove-all-confirm" onClick={remove}>
+            Yes, remove {count === 1 ? '1 rider' : `${count} riders`}
+          </button>
+          <button onClick={() => setArmed(false)}>Cancel</button>
+        </div>
+      ) : (
+        <button class="danger" data-testid="remove-all" disabled={playing || count === 0} onClick={() => setArmed(true)}>
+          Remove all riders
+        </button>
+      )}
+      {playing && <p class="muted">Stop the game first.</p>}
+    </Card>
+  );
+}
+
 export function PlayersPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [query, setQuery] = useState('');
@@ -119,6 +155,7 @@ export function PlayersPage() {
           ))}
         </ul>
       </Card>
+      <RemoveAll count={players.length} onDone={refresh} />
       <Card title="Add a card by UID">
         <form class="stack" onSubmit={enroll}>
           <input aria-label="Card UID" placeholder="Card UID, e.g. 04A1B2C3D4E5F6" value={uid} onInput={(e) => setUid((e.target as HTMLInputElement).value)} />
@@ -127,7 +164,9 @@ export function PlayersPage() {
             Add card
           </button>
         </form>
-        <p class="muted">Unknown cards are added automatically when they tap, while enrollment is open.</p>
+        <p class="muted">
+          For cards you can't program. Programmed cards (see Cards) are added the first time they tap.
+        </p>
       </Card>
     </div>
   );

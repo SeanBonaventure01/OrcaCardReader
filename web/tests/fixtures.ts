@@ -6,7 +6,6 @@ export interface FixtureStep {
   method: string;
   path: string;
   body?: unknown;
-  auth?: boolean;
 }
 
 export interface Fixture {
@@ -57,18 +56,15 @@ export interface RecordedRequest {
   method: string;
   path: string;
   body: unknown;
-  auth: string | null;
 }
 
 // A fetch that answers with the fixture's response and records what was sent.
 export function fixtureFetch(fx: Fixture, sent: RecordedRequest[]): typeof fetch {
   return (async (input: RequestInfo | URL, init?: RequestInit) => {
-    const headers = (init?.headers ?? {}) as Record<string, string>;
     sent.push({
       method: init?.method ?? 'GET',
       path: String(input),
       body: init?.body ? JSON.parse(String(init.body)) : undefined,
-      auth: headers.Authorization ?? null,
     });
     const body = fx.response.body === undefined ? '' : JSON.stringify(materialize(fx.response.body));
     return new Response(body, { status: fx.response.status, headers: { 'Content-Type': 'application/json' } });

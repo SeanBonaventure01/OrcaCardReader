@@ -42,7 +42,7 @@ struct Feedback {
 
 struct Player {
   int number = 0;
-  std::string uid;  // uppercase hex
+  std::string uid;  // uppercase hex; empty once the player's card was replaced by another
   std::string name;
   std::string team;
   bool banned = false;

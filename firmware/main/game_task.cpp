@@ -29,10 +29,7 @@ struct Call {
   std::string* error_message;
   SemaphoreHandle_t done;
 };
-struct Tap {
-  std::string uid;
-};
-using Msg = std::variant<Call, Tap>;
+using Msg = std::variant<Call>;
 
 using Queue = device::Mailbox<Msg>;
 using Saver = device::Mailbox<std::string>;
@@ -97,13 +94,6 @@ void GameTask::loop() {
           *call->error_message = e.what();
         }
         xSemaphoreGive(call->done);
-      } else if (auto* tap = std::get_if<Tap>(msg.get())) {
-        try {
-          const auto r = engine_.tap(tap->uid);
-          ESP_LOGI(TAG, "TAP %s -> %s %+lld", r.uid.c_str(), game::to_string(r.outcome), static_cast<long long>(r.points));
-        } catch (const game::EngineError& e) {
-          ESP_LOGW(TAG, "tap rejected: %s", e.what());
-        }
       }
     }
     if (now_ms() >= next_tick) {
@@ -146,8 +136,34 @@ json GameTask::with_engine(const std::function<json(game::Engine&)>& fn) {
   return result;
 }
 
-void GameTask::tap(const std::string& uid) {
-  if (!static_cast<Queue*>(queue_)->post(Tap{uid})) ESP_LOGW(TAG, "game queue full, tap dropped");
+std::optional<int> GameTask::card_seen(const std::string& uid, std::optional<int> card_player) {
+  try {
+    const json r = with_engine([&](game::Engine& e) {
+      if (!e.provisioning().active) {
+        const auto t = e.tap(uid, card_player);
+        ESP_LOGI(TAG, "TAP %s -> %s %+lld", t.uid.c_str(), game::to_string(t.outcome), static_cast<long long>(t.points));
+        return json(nullptr);
+      }
+      const auto n = e.card_seen(uid, card_player);
+      return n ? json(*n) : json(nullptr);
+    });
+    if (r.is_number_integer()) return r.get<int>();
+  } catch (const game::EngineError& e) {
+    ESP_LOGW(TAG, "card %s: %s", uid.c_str(), e.what());
+  }
+  return std::nullopt;
+}
+
+void GameTask::card_written(const std::string& uid, int number, game::WriteResult result) {
+  try {
+    with_engine([&](game::Engine& e) {
+      e.card_written(uid, number, result);
+      maybe_save(true);  // a freshly programmed card should survive an immediate power cut
+      return json();
+    });
+  } catch (const game::EngineError& e) {
+    ESP_LOGW(TAG, "card %s: %s", uid.c_str(), e.what());
+  }
 }
 
 }  // namespace orca::app

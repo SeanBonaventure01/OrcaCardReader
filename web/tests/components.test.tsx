@@ -1,10 +1,11 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/preact';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { ProgrammedLog } from '../src/components/CardsPage';
 import { Leaderboard } from '../src/components/common';
 import { ParamFields } from '../src/components/ParamFields';
 import { toFormValues } from '../src/paramForm';
-import type { Board, GameInfo } from '../src/types';
+import type { Board, GameInfo, ProvisionRecord } from '../src/types';
 import { loadFixtures, materialize } from './fixtures';
 
 const fixtures = loadFixtures();
@@ -67,5 +68,25 @@ describe('ParamFields', () => {
       ['points', '7'],
     ]);
     expect(screen.getByRole('alert').textContent).toBe('Must be between 1 and 100');
+  });
+});
+
+describe('ProgrammedLog', () => {
+  const record = (name: string) =>
+    (materialize(fixtures.get(name)!.response.body) as { provision: ProvisionRecord }).provision;
+
+  it('shows each card with a plain-language result and tone', () => {
+    render(<ProgrammedLog records={[record('provision_sim_tap_programmed_card'), record('provision_sim_tap_writes_card')]} />);
+    const rows = screen.getByTestId('programmed').querySelectorAll('li');
+    expect(rows).toHaveLength(2);
+    expect(rows[0].textContent).toContain('#1 Registered');
+    expect(rows[0].className).toBe('tone-success');
+    expect(rows[1].textContent).toContain('#5 Programmed');
+    expect(rows[1].textContent).toContain('Next: card #6');
+  });
+
+  it('shows a hint when empty', () => {
+    render(<ProgrammedLog records={[]} />);
+    expect(screen.getByText(/No cards programmed yet/)).toBeTruthy();
   });
 });

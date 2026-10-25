@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { availableActions, humanDuration, mmss, multiplierLabel, outcomeTone, randomUid } from '../src/format';
-import { engineNow, FEED_LIMIT, initialLive, reduceLive } from '../src/live';
+import { engineNow, FEED_LIMIT, initialLive, PROGRAMMED_LIMIT, reduceLive } from '../src/live';
 import { fromFormValues, toFormValues } from '../src/paramForm';
 import type { GameInfo, Status, TapRecord } from '../src/types';
 import { loadFixtures, materialize } from './fixtures';
@@ -168,5 +168,23 @@ describe('live reducer', () => {
     s = reduceLive(s, { type: 'device', out: 'sound', id: 'accept' });
     expect(s.device).toMatchObject({ seen: true, leds: 'accept_flash', sound: 'accept' });
     expect(s.device.screen?.headline).toBe('Fare paid');
+  });
+});
+
+describe('card programming', () => {
+  const status = materialize(fixtures.get('provision_status')!.response.body) as Status;
+
+  it('status carries the provisioning state from the firmware', () => {
+    expect(status.provisioning.active).toBe(true);
+    expect(status.provisioning.next).toBe(2);
+    expect(status.provisioning.last?.result).toBe('written');
+  });
+
+  it('provision messages build a newest-first log with a limit', () => {
+    const record = status.provisioning.last!;
+    let s = initialLive;
+    for (let i = 1; i <= PROGRAMMED_LIMIT + 3; i++) s = reduceLive(s, { type: 'provision', record: { ...record, number: i } });
+    expect(s.programmed).toHaveLength(PROGRAMMED_LIMIT);
+    expect(s.programmed[0].number).toBe(PROGRAMMED_LIMIT + 3);
   });
 });

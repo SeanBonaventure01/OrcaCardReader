@@ -1,0 +1,24 @@
+# Profanity mode voice lines: short, a few words each. "accept:" lines play after a paid
+# fare; "reject:" lines after a transfer (cooldown), unknown card or banned card. Every line
+# is spoken in every voice and the costume picks a voice at random per tap. Edit, then run:
+#   python3 tools/assets/make_voice.py profanity --voice "Ava (Premium)" --voice Bruce
+# To use your own recording (e.g. an AI voice), save it as
+# tools/assets/voice/profanity/<voice>/<line>.wav, both lowercased with non-letters as dashes
+# ("Ava (Premium)" -> ava-premium, "Eat shit." -> eat-shit). Any WAV format works.
+
+accept: Fuck you.
+accept: Eat shit.
+accept: Fare paid, asshole.
+accept: Welcome aboard, dipshit.
+accept: Hold the rail, bitch.
+accept: Next stop: hell.
+accept: Sit down, fucker.
+accept: Nice tap, genius.
+accept: Get on, loser.
+accept: Move it, jackass.
+reject: Nice try.
+reject: Already paid, dumbass.
+reject: Nope. Fuck off.
+reject: Walk, asshole.
+reject: Who the hell are you?
+reject: Fare evader!

@@ -139,6 +139,14 @@ TEST(Pn532Driver, PollCardFoundAndEmpty) {
   EXPECT_EQ(pn.last_error(), Pn532Error::None);  // empty field is not an error
 }
 
+TEST(Pn532Driver, SetPassiveRetries) {
+  ScriptedTransport t;
+  t.respond({0x33});
+  Pn532 pn(t);
+  EXPECT_TRUE(pn.set_passive_retries(2));
+  EXPECT_EQ(t.writes.at(0), build_frame(cmd::kRfConfiguration, {0x05, 0xFF, 0x01, 0x02}));
+}
+
 TEST(Pn532Driver, ErrorPaths) {
   ScriptedTransport t;
   Pn532 pn(t);
@@ -182,24 +190,58 @@ TEST(Pn532Driver, NtagReadAndWrite) {
   EXPECT_EQ(t.writes.size(), 3u);
 }
 
-// ---------------------------------------------------------------- payload
+// ---------------------------------------------------------------- card text (NDEF)
 
-TEST(CardPayload, RoundTrip) {
-  auto b = encode_payload({42});
-  ASSERT_EQ(b.size(), 8u);
-  EXPECT_EQ(decode_payload(b)->player, 42);
-  b.resize(16, 0xEE);  // as returned by a 16-byte NTAG read
-  EXPECT_EQ(decode_payload(b)->player, 42);
+TEST(CardText, FormatAndParse) {
+  EXPECT_EQ(card_text(7), "orca-card-game-07");
+  EXPECT_EQ(card_text(20), "orca-card-game-20");
+  EXPECT_EQ(card_text(123), "orca-card-game-123");
+  EXPECT_EQ(parse_card_text("orca-card-game-07"), 7);
+  EXPECT_EQ(parse_card_text("  ORCA-Card-Game-7\n"), 7);  // typed by hand in a phone app
+  EXPECT_EQ(parse_card_text("orca-card-game-9999"), 9999);
+  EXPECT_FALSE(parse_card_text("orca-card-game-00"));
+  EXPECT_FALSE(parse_card_text("orca-card-game-"));
+  EXPECT_FALSE(parse_card_text("orca-card-game-12345"));
+  EXPECT_FALSE(parse_card_text("orca-card-game-7a"));
+  EXPECT_FALSE(parse_card_text("hello"));
 }
 
-TEST(CardPayload, RejectsForeignOrCorruptData) {
-  auto b = encode_payload({7});
-  auto corrupt = b;
-  corrupt[6] ^= 0xFF;
-  EXPECT_FALSE(decode_payload(corrupt));
-  EXPECT_FALSE(decode_payload({0, 0, 0, 0, 0, 0, 0, 0}));
-  EXPECT_FALSE(decode_payload({'O', 'R', 'C'}));
-  EXPECT_FALSE(decode_payload(encode_payload({0})));
+TEST(CardText, EncodesAStandardNdefTextRecord) {
+  // TLV 03 len | D1 01 plen 'T' | 02 'e' 'n' | text | FE | zero padding to whole pages
+  const Bytes b = encode_ndef_text("hi");
+  EXPECT_EQ(b, (Bytes{0x03, 0x09, 0xD1, 0x01, 0x05, 'T', 0x02, 'e', 'n', 'h', 'i', 0xFE}));
+  const Bytes card = encode_card(7);
+  EXPECT_EQ(card.size() % 4, 0u);
+  EXPECT_EQ(card.size(), 28u);  // 7 pages
+  EXPECT_EQ(decode_card(card), 7);
+}
+
+TEST(CardText, ReadsWhatPhoneAppsWrite) {
+  // Lock control TLV first and a NULL TLV (as some tags ship), then a two-record message:
+  // a URI record before our Text record, language "en-US".
+  Bytes mem = {0x01, 0x03, 0xA0, 0x0C, 0x34, 0x00, 0x03, 0x00};
+  const Bytes uri = {0x91, 0x01, 0x04, 'U', 0x04, 'a', '.', 'b'};  // MB, SR, not ME
+  const std::string text = "orca-card-game-12";
+  Bytes txt = {0x51, 0x01, static_cast<std::uint8_t>(6 + text.size()), 'T', 0x05, 'e', 'n', '-', 'U', 'S'};  // ME, SR
+  txt.insert(txt.end(), text.begin(), text.end());
+  mem[7] = static_cast<std::uint8_t>(uri.size() + txt.size());
+  mem.insert(mem.end(), uri.begin(), uri.end());
+  mem.insert(mem.end(), txt.begin(), txt.end());
+  mem.push_back(0xFE);
+  EXPECT_EQ(decode_ndef_text(mem), text);
+  EXPECT_EQ(decode_card(mem), 12);
+  EXPECT_EQ(ndef_bytes_needed(Bytes(mem.begin(), mem.begin() + 16)), 8 + uri.size() + txt.size());
+}
+
+TEST(CardText, RejectsBlankTruncatedAndForeignCards) {
+  EXPECT_FALSE(decode_card(Bytes(16, 0x00)));  // factory-blank user memory
+  EXPECT_EQ(ndef_bytes_needed(Bytes(16, 0x00)), 0u);
+  EXPECT_FALSE(decode_card({0x03, 0x00, 0xFE, 0x00}));  // empty NDEF message
+  Bytes card = encode_card(3);
+  EXPECT_EQ(ndef_bytes_needed(Bytes(card.begin(), card.begin() + 16)), 26u);
+  card.resize(16);  // only the first read came back
+  EXPECT_FALSE(decode_card(card));
+  EXPECT_FALSE(decode_card(encode_ndef_text("hello world")));  // someone else's text
 }
 
 // ---------------------------------------------------------------- debouncer

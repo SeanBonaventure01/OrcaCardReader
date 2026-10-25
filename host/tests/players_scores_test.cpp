@@ -120,3 +120,54 @@ TEST(ScoreBoard, JsonRoundTrip) {
   EXPECT_EQ(copy.stats(1).last_tap, 500);
   EXPECT_EQ(copy.total(), 4);
 }
+
+TEST(PlayerRegistry, EnrollAsUsesTheGivenNumberAndKeepsOrder) {
+  PlayerRegistry r;
+  r.enroll("AA000001");                       // #1
+  EXPECT_EQ(r.enroll_as("AA000007", 7).number, 7);
+  EXPECT_EQ(r.enroll_as("AA000003", 3, "Ghost").name, "Ghost");
+  EXPECT_EQ(r.find_uid("AA000007")->number, 7);  // indices stay right after inserting before it
+  EXPECT_EQ(r.find(3)->uid, "AA000003");
+  EXPECT_EQ(r.enroll("AA000008").number, 8);     // sequential numbering continues after the highest
+  EXPECT_EQ(r.all().front().number, 1);
+  EXPECT_EQ(r.all().back().number, 8);
+  EXPECT_THROW(r.enroll_as("AA000009", 3), EngineError);  // number taken
+  EXPECT_THROW(r.enroll_as("AA000001", 4), EngineError);  // card enrolled
+  EXPECT_THROW(r.enroll_as("AA00000A", 0), EngineError);
+}
+
+TEST(PlayerRegistry, NextUnclaimedSkipsNumbersThatHaveACard) {
+  PlayerRegistry r;
+  EXPECT_EQ(r.next_unclaimed(), 1);
+  r.enroll("AA000001");
+  r.enroll("AA000002");
+  r.enroll_as("AA000004", 4);
+  EXPECT_EQ(r.next_unclaimed(), 3);
+  EXPECT_EQ(r.next_unclaimed(4), 5);
+  EXPECT_EQ(r.next_unclaimed(10), 10);
+  // #2's card was reprogrammed as #6: #2 has no card, so it's free to give a new card.
+  r.bind("AA000002", 6);
+  EXPECT_EQ(r.next_unclaimed(2), 2);
+}
+
+TEST(PlayerRegistry, BindMovesACardsNumberToANewCard) {
+  PlayerRegistry r;
+  r.enroll_as("AA000001", 1, "Ghost");
+  r.enroll_as("AA000002", 2);
+  // Replacement card for #1: same player, new card; the old card is unbound.
+  Player& p = r.bind("BB000001", 1);
+  EXPECT_EQ(p.name, "Ghost");
+  EXPECT_EQ(r.find_uid("BB000001")->number, 1);
+  EXPECT_EQ(r.find_uid("AA000001"), nullptr);
+  // Card #2 reprogrammed as #5: #5 is created, #2 keeps its score but has no card.
+  EXPECT_EQ(r.bind("AA000002", 5).number, 5);
+  EXPECT_EQ(r.find(2)->uid, "");
+  EXPECT_EQ(r.find_uid("AA000002")->number, 5);
+  EXPECT_EQ(&r.bind("AA000002", 5), r.find(5));  // already bound: no change
+  // Players without a card survive a save/load and don't claim the empty UID.
+  PlayerRegistry copy;
+  copy.from_json(r.to_json());
+  EXPECT_EQ(copy.find(2)->uid, "");
+  EXPECT_EQ(copy.find_uid(""), nullptr);
+  EXPECT_EQ(copy.find_uid("AA000002")->number, 5);
+}

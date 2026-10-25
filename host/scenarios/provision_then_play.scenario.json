@@ -1,0 +1,15 @@
+{
+  "game": "fare_paid",
+  "seed": 1,
+  "open_enrollment": false,
+  "players": [],
+  "steps": [
+    {"at": "0s", "api": ["POST", "/api/provision", {}]},
+    {"at": "2s", "tap": "04C0000001", "expect": {"players": 1}},
+    {"at": "4s", "tap": "04C0000002", "expect": {"players": 2}},
+    {"at": "8s", "tap": "04C0000003", "expect": {"players": 3}},
+    {"at": "10s", "api": ["POST", "/api/provision/stop"]},
+    {"at": "12s", "tap": "04C0000002", "expect": {"outcome": "accepted", "score": {"04C0000002": 1}}},
+    {"at": "14s", "tap": "04C0000099", "expect": {"outcome": "unknown", "players": 3}}
+  ]
+}

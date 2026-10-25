@@ -26,6 +26,8 @@ void show(const hal::ScreenCmd& cmd);
 void set_board(std::vector<BoardLine> top);
 // Small print on the top-riders page, e.g. "Wi-Fi ORCA-READER - http://192.168.4.1".
 void set_footer(const std::string& text);
+// Confetti / fireworks over paid-fare screens.
+void set_effects(bool on);
 // Wall clock for the status bar (the device has no RTC; the phone UI provides it).
 void set_wall_clock(std::int64_t epoch_ms, int utc_offset_min);
 // Color of the optional on-screen LED preview bar (CONFIG_ORCA_LED_PREVIEW).

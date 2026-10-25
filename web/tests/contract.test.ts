@@ -2,16 +2,14 @@
 // replayed against the real C++ API, so if either side drifts, one of the suites fails.
 import { describe, expect, it } from 'vitest';
 
-import { ApiClient, ApiError, memoryTokenStore } from '../src/api';
+import { ApiClient, ApiError } from '../src/api';
 import { type Fixture, fixtureFetch, loadFixtures, materialize, type RecordedRequest } from './fixtures';
 
 const fixtures = loadFixtures();
 
 // How the UI makes each fixture's request.
 const calls: Record<string, (c: ApiClient) => Promise<unknown>> = {
-  login_ok: (c) => c.login('1031'),
-  login_wrong_pin: (c) => c.login('0000'),
-  admin_route_without_login: (c) => c.games(),
+  health: (c) => c.health(),
   status_initial: (c) => c.status(),
   games_list: (c) => c.games(),
   select_game: (c) => c.selectGame('fare_paid', { cooldown: 60000 }),
@@ -43,15 +41,26 @@ const calls: Record<string, (c: ApiClient) => Promise<unknown>> = {
   settings_get: (c) => c.settings(),
   settings_patch: (c) => c.patchSettings({ volume: 35 }),
   settings_patch_invalid: (c) => c.patchSettings({ brightness: 0 }),
+  settings_patch_voice: (c) => c.patchSettings({ voice: 'profanity', effects: false }),
+  settings_patch_bad_voice: (c) => c.patchSettings({ voice: 'pirate' as never }),
   enrollment_close: (c) => c.setEnrollment(false),
   clock_sync: (c) => c.syncClock(1793476920000, -420),
   unknown_route: (c) => c.request('GET', '/api/nope'),
+  provision_start: (c) => c.startProvisioning(),
+  provision_start_at_number: (c) => c.startProvisioning({ start: 1, overwrite: true }),
+  provision_start_invalid: (c) => c.startProvisioning({ start: 0 }),
+  provision_sim_tap_writes_card: (c) => c.simTap({ uid: '04000001' }),
+  provision_sim_tap_programmed_card: (c) => c.simTap({ uid: '04000002', card: 1 }),
+  players_clear: (c) => c.clearPlayers(),
+  players_clear_mid_game: (c) => c.clearPlayers(),
+  provision_status: (c) => c.status(),
+  provision_stop: (c) => c.stopProvisioning(),
+  sim_tap_programmed_card: (c) => c.simTap({ uid: '04000042', card: 42 }),
 };
 
 async function run(fx: Fixture) {
   const sent: RecordedRequest[] = [];
-  const auth = fx.request.auth ?? true;
-  const client = new ApiClient(fixtureFetch(fx, sent), memoryTokenStore(auth ? 'tok' : null));
+  const client = new ApiClient(fixtureFetch(fx, sent));
   let result: unknown;
   let error: unknown;
   try {
@@ -76,7 +85,6 @@ describe('API contract fixtures', () => {
       expect(sent[0].method).toBe(fx.request.method);
       expect(sent[0].path).toBe(fx.request.path);
       expect(sent[0].body).toEqual(fx.request.body);
-      expect(sent[0].auth).toBe((fx.request.auth ?? true) ? 'Bearer tok' : null);
 
       // Response: success values come through; errors become ApiError with the server's message.
       const body = materialize(fx.response.body) as Record<string, unknown>;
@@ -89,27 +97,6 @@ describe('API contract fixtures', () => {
       }
     });
   }
-
-  it('login stores the token from the response', async () => {
-    const { client } = await run(fixtures.get('login_ok')!);
-    expect(client.tokens.get()).toBe('sample');
-  });
-
-  it('a 401 on an admin call logs out', async () => {
-    const fx = fixtures.get('admin_route_without_login')!;
-    const sent: RecordedRequest[] = [];
-    const client = new ApiClient(fixtureFetch(fx, sent), memoryTokenStore('stale'));
-    let fired = false;
-    client.onUnauthorized = () => (fired = true);
-    await expect(client.games()).rejects.toBeInstanceOf(ApiError);
-    expect(client.tokens.get()).toBeNull();
-    expect(fired).toBe(true);
-  });
-
-  it('wrong PIN does not count as being logged out', async () => {
-    const { client } = await run(fixtures.get('login_wrong_pin')!);
-    expect(client.tokens.get()).toBeNull();
-  });
 
   it('unwraps list responses', async () => {
     expect(((await run(fixtures.get('players_list')!)).result as unknown[]).length).toBe(2);

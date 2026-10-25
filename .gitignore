@@ -24,3 +24,6 @@ web/test-results/
 web/playwright-report/
 host/build/sim-state.json*
 tools/hil/.venv/
+
+# Python
+__pycache__/

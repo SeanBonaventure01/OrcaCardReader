@@ -11,13 +11,12 @@ Each `*.json` file is an array of cases shared by two test suites:
 {
   "name": "unique_case_name",
   "setup": [ {"method": "POST", "path": "/api/game/select", "body": {"id": "fare_paid"}} ],
-  "request": {"method": "POST", "path": "/api/sim/tap", "body": {"uid": "04A1B2C3"}, "auth": true},
+  "request": {"method": "POST", "path": "/api/sim/tap", "body": {"uid": "04A1B2C3"}},
   "response": {"status": 200, "body": {"outcome": "accepted", "seq": "<number>"}}
 }
 ```
 
-- `setup` steps run first, authenticated, and must succeed (2xx).
-- `auth` (default `true`) logs in with PIN 1031 and sends the token.
+- `setup` steps run first and must succeed (2xx). There's no login: the API has no PIN.
 - `response.body` is a pattern: objects match the listed keys (extra keys are allowed),
   arrays must have the same length, and the placeholders `<any>`, `<number>`, `<string>`,
   `<bool>`, `<array>`, `<object>` and `<null>` match by type.

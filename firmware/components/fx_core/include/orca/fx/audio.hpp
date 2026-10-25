@@ -36,7 +36,25 @@ void mix(const std::int16_t* a, std::size_t na, int va, const std::int16_t* b, s
 std::vector<std::int16_t> synth_tone(std::uint32_t sample_rate, double freq_hz, std::uint32_t ms, int amplitude = 12000,
                                      bool square = true);
 
-// The ORCA-style feedback beeps: accept = one high beep; reject = two low beeps.
+// One partial of a struck tone: a sine that rises over `attack_s`, then decays exponentially.
+struct Partial {
+  double freq_hz;
+  double level_db;  // relative to the loudest partial
+  double attack_s;
+  double decay_db_per_s;
+};
+
+// The real ORCA reader's "bong", measured from a phone recording (tools/assets/orca_bong.py):
+// a 605 Hz ring with bright odd overtones that die away within ~150 ms.
+extern const std::vector<Partial> kOrcaBong;
+
+// Sums `partials` with every frequency scaled by `pitch`, `ms` long, fading out over the last
+// 100 ms (or quarter, if shorter), normalised so the loudest sample is `peak`.
+std::vector<std::int16_t> synth_partials(std::uint32_t sample_rate, const std::vector<Partial>& partials, double pitch,
+                                         std::uint32_t ms, int peak = 30000);
+
+// The ORCA feedback sounds, built from kOrcaBong: accept = one bong; reject = two short low
+// bongs; bonus/start/end = little bong chimes. Empty for unknown ids.
 std::vector<std::int16_t> synth_beep(const std::string& id, std::uint32_t sample_rate);
 
 struct SoundMap {

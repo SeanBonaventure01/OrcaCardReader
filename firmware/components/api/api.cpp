@@ -1,7 +1,6 @@
 #include "orca/api/api.hpp"
 
 #include <algorithm>
-#include <cinttypes>
 #include <cstdio>
 
 namespace orca::api {
@@ -111,34 +110,24 @@ std::map<std::string, std::string> Api::parse_query(const std::string& query) {
   return out;
 }
 
-Api::Api(EngineGateway& gateway, SettingsStore& settings, const hal::Clock& clock, hal::Random& rng, ApiOptions options)
-    : engine_(gateway), settings_(settings), clock_(clock), rng_(rng), options_(std::move(options)) {
+Api::Api(EngineGateway& gateway, SettingsStore& settings) : engine_(gateway), settings_(settings) {
   using E = game::Engine;
   auto status = [this] { return engine([](E& e) { return e.status_json(); }); };
 
-  // ---- public
-  add("GET", "/api/health", false, [](Ctx&) { return json_response(200, json{{"ok", true}}); });
-  add("GET", "/api/status", false, [status](Ctx&) { return json_response(200, status()); });
-  add("GET", "/api/board", false, [this](Ctx& c) {
+  add("GET", "/api/health", [](Ctx&) { return json_response(200, json{{"ok", true}}); });
+  add("GET", "/api/status", [status](Ctx&) { return json_response(200, status()); });
+  add("GET", "/api/board", [this](Ctx& c) {
     const auto limit = limit_param(c.query, 10, 100);
     return json_response(200, engine([&](E& e) { return e.board_json(limit); }));
   });
-  add("GET", "/api/taps", false, [this](Ctx& c) {
+  add("GET", "/api/taps", [this](Ctx& c) {
     const auto limit = limit_param(c.query, 20, 100);
     return json_response(200, json{{"taps", engine([&](E& e) { return e.recent_taps_json(limit); })}});
   });
-  add("POST", "/api/login", false, [this](Ctx& c) { return login(c); });
-
-  // ---- admin
-  add("POST", "/api/logout", true, [this](Ctx& c) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    sessions_.erase(c.req.token);
-    return json_response(200, json{{"ok", true}});
-  });
-  add("GET", "/api/games", true, [this](Ctx&) {
+  add("GET", "/api/games", [this](Ctx&) {
     return json_response(200, json{{"games", engine([](E& e) { return e.games_json(); })}});
   });
-  add("POST", "/api/game/select", true, [this](Ctx& c) {
+  add("POST", "/api/game/select", [this](Ctx& c) {
     only_keys(c.body, {"id", "params", "keep_scores"});
     const std::string id = req_string(c.body, "id");
     const json params = c.body.value("params", json::object());
@@ -151,7 +140,7 @@ Api::Api(EngineGateway& gateway, SettingsStore& settings, const hal::Clock& cloc
   });
   for (const char* action : {"start", "pause", "resume", "stop", "reset"}) {
     const std::string a = action;
-    add("POST", "/api/game/" + a, true, [this, a](Ctx&) {
+    add("POST", "/api/game/" + a, [this, a](Ctx&) {
       return json_response(200, engine([&](E& e) {
                              if (a == "start") e.start();
                              else if (a == "pause") e.pause();
@@ -162,25 +151,31 @@ Api::Api(EngineGateway& gateway, SettingsStore& settings, const hal::Clock& cloc
                            }));
     });
   }
-  add("POST", "/api/game/action", true, [this](Ctx& c) {
+  add("POST", "/api/game/action", [this](Ctx& c) {
     only_keys(c.body, {"action", "args"});
     const std::string action = req_string(c.body, "action", 32);
     const json args = c.body.value("args", json::object());
     return json_response(200, engine([&](E& e) { return e.game_action(action, args); }));
   });
-  add("GET", "/api/players", true, [this](Ctx&) {
+  add("GET", "/api/players", [this](Ctx&) {
     return json_response(200, json{{"players", engine([](E& e) { return e.players_json(); })}});
   });
-  add("POST", "/api/players", true, [this](Ctx& c) {
+  add("DELETE", "/api/players", [this](Ctx&) {
+    return json_response(200, json{{"players", engine([](E& e) {
+                                     e.clear_players();
+                                     return e.players_json();
+                                   })}});
+  });
+  add("POST", "/api/players", [this](Ctx& c) {
     only_keys(c.body, {"uid", "name"});
     const std::string uid = req_string(c.body, "uid", 32);
     const std::string name = opt_string(c.body, "name", 24);
     return json_response(201, engine([&](E& e) { return player_json(e, e.enroll(uid, name).number); }));
   });
-  add("PATCH", "/api/players/{no}", true, [this](Ctx& c) {
+  add("PATCH", "/api/players/{no}", [this](Ctx& c) {
     return json_response(200, engine([&](E& e) { return player_json(e, e.update_player(c.number, c.body).number); }));
   });
-  add("POST", "/api/players/{no}/adjust", true, [this](Ctx& c) {
+  add("POST", "/api/players/{no}/adjust", [this](Ctx& c) {
     only_keys(c.body, {"delta"});
     const auto delta = req_int(c.body, "delta");
     return json_response(200, engine([&](E& e) {
@@ -188,7 +183,7 @@ Api::Api(EngineGateway& gateway, SettingsStore& settings, const hal::Clock& cloc
                            return player_json(e, c.number);
                          }));
   });
-  add("POST", "/api/events/trigger", true, [this](Ctx& c) {
+  add("POST", "/api/events/trigger", [this](Ctx& c) {
     only_keys(c.body, {"kind", "name", "duration_ms", "multiplier"});
     const std::string kind_s = c.body.contains("kind") ? req_string(c.body, "kind") : "multiplier";
     const auto kind = game::event_kind_from_string(kind_s);
@@ -202,15 +197,18 @@ Api::Api(EngineGateway& gateway, SettingsStore& settings, const hal::Clock& cloc
     }
     return json_response(200, engine([&](E& e) { return json(e.trigger_event(*kind, name, duration, mult)); }));
   });
-  add("POST", "/api/events/end", true, [this](Ctx&) {
+  add("POST", "/api/events/end", [this](Ctx&) {
     return json_response(200, engine([](E& e) {
                            e.end_events();
                            return e.status_json();
                          }));
   });
-  add("POST", "/api/sim/tap", true, [this](Ctx& c) {
-    only_keys(c.body, {"uid", "player"});
+  add("POST", "/api/sim/tap", [this](Ctx& c) {
+    only_keys(c.body, {"uid", "player", "card"});
     if (c.body.contains("uid") == c.body.contains("player")) throw EngineError(400, "give exactly one of uid or player");
+    // "card": the player number stored on the simulated card, as if it had been programmed.
+    std::optional<int> card;
+    if (c.body.contains("card")) card = static_cast<int>(req_int(c.body, "card"));
     return json_response(200, engine([&](E& e) {
                            std::string uid;
                            if (c.body.contains("uid")) {
@@ -220,10 +218,33 @@ Api::Api(EngineGateway& gateway, SettingsStore& settings, const hal::Clock& cloc
                              if (!p) throw EngineError(404, "no such player");
                              uid = p->uid;
                            }
-                           return json(e.tap(uid));
+                           if (!e.provisioning().active) return json(e.tap(uid, card));
+                           // A simulated card always takes the write.
+                           if (auto n = e.card_seen(uid, card)) e.card_written(uid, *n, game::WriteResult::Ok);
+                           return json{{"provision", *e.provisioning().last}};
                          }));
   });
-  add("POST", "/api/enrollment", true, [this](Ctx& c) {
+  add("POST", "/api/provision", [this](Ctx& c) {
+    only_keys(c.body, {"start", "overwrite"});
+    int start = 0;
+    if (c.body.contains("start")) {
+      const auto v = req_int(c.body, "start");
+      if (v < 1 || v > 9999) throw EngineError(400, "start must be between 1 and 9999");
+      start = static_cast<int>(v);
+    }
+    const bool overwrite = c.body.contains("overwrite") && req_bool(c.body, "overwrite");
+    return json_response(200, engine([&](E& e) {
+                           e.start_provisioning(start, overwrite);
+                           return e.provisioning_json();
+                         }));
+  });
+  add("POST", "/api/provision/stop", [this](Ctx&) {
+    return json_response(200, engine([&](E& e) {
+                           e.stop_provisioning();
+                           return e.provisioning_json();
+                         }));
+  });
+  add("POST", "/api/enrollment", [this](Ctx& c) {
     only_keys(c.body, {"open"});
     const bool open = req_bool(c.body, "open");
     return json_response(200, engine([&](E& e) {
@@ -231,7 +252,7 @@ Api::Api(EngineGateway& gateway, SettingsStore& settings, const hal::Clock& cloc
                            return e.status_json();
                          }));
   });
-  add("POST", "/api/clock", true, [this](Ctx& c) {
+  add("POST", "/api/clock", [this](Ctx& c) {
     only_keys(c.body, {"epoch_ms", "utc_offset_min"});
     const auto epoch = req_int(c.body, "epoch_ms");
     const auto offset = c.body.contains("utc_offset_min") ? req_int(c.body, "utc_offset_min") : 0;
@@ -241,7 +262,7 @@ Api::Api(EngineGateway& gateway, SettingsStore& settings, const hal::Clock& cloc
     });
     return json_response(200, json{{"ok", true}});
   });
-  add("POST", "/api/fx/sound", true, [this](Ctx& c) {
+  add("POST", "/api/fx/sound", [this](Ctx& c) {
     only_keys(c.body, {"id"});
     const std::string id = req_string(c.body, "id", 32);
     engine([&](E& e) {
@@ -250,69 +271,26 @@ Api::Api(EngineGateway& gateway, SettingsStore& settings, const hal::Clock& cloc
     });
     return json_response(200, json{{"ok", true}});
   });
-  add("GET", "/api/settings", true, [this](Ctx&) { return json_response(200, config::to_json(settings_.get())); });
-  add("PATCH", "/api/settings", true, [this](Ctx& c) {
+  add("GET", "/api/settings", [this](Ctx&) { return json_response(200, config::to_json(settings_.get())); });
+  add("PATCH", "/api/settings", [this](Ctx& c) {
     config::PatchResult r = config::apply_patch(settings_.get(), c.body);
     if (!r.ok) throw EngineError(400, r.error);
     settings_.set(r.settings);
     return json_response(200, config::to_json(r.settings));
   });
-  add("GET", "/api/snapshot", true, [this](Ctx&) {
+  add("GET", "/api/snapshot", [this](Ctx&) {
     return json_response(200, engine([](E& e) { return e.snapshot(); }));
   });
 }
 
-void Api::add(const std::string& method, const std::string& pattern, bool admin, Handler h) {
-  routes_.push_back({method, split_path(pattern), admin, std::move(h)});
+void Api::add(const std::string& method, const std::string& pattern, Handler h) {
+  routes_.push_back({method, split_path(pattern), std::move(h)});
 }
 
 json Api::hello() {
   return engine([](game::Engine& e) {
     return json{{"type", "hello"}, {"status", e.status_json()}, {"board", e.board_json(10)}};
   });
-}
-
-bool Api::authorized(const std::string& token) {
-  if (token.empty()) return false;
-  std::lock_guard<std::mutex> lock(mutex_);
-  auto it = sessions_.find(token);
-  if (it == sessions_.end()) return false;
-  if (clock_.now_ms() >= it->second) {
-    sessions_.erase(it);
-    return false;
-  }
-  return true;
-}
-
-ApiResponse Api::login(Ctx& c) {
-  only_keys(c.body, {"pin"});
-  const std::string pin = req_string(c.body, "pin", 16);
-  std::lock_guard<std::mutex> lock(mutex_);
-  const TimeMs now = clock_.now_ms();
-  if (now < locked_until_) {
-    return error(429, "too many attempts; try again in " + std::to_string((locked_until_ - now + 999) / 1000) + " s");
-  }
-  bool match = !options_.admin_pin.empty() && pin.size() == options_.admin_pin.size();
-  for (std::size_t i = 0; match && i < pin.size(); ++i) match &= pin[i] == options_.admin_pin[i];
-  if (!match) {
-    if (++failed_logins_ >= options_.max_failed_logins) {
-      failed_logins_ = 0;
-      locked_until_ = now + options_.lockout;
-    }
-    return error(401, "wrong PIN");
-  }
-  failed_logins_ = 0;
-
-  for (auto it = sessions_.begin(); it != sessions_.end();) it = now >= it->second ? sessions_.erase(it) : std::next(it);
-  while (sessions_.size() >= options_.max_sessions) {
-    auto oldest = std::min_element(sessions_.begin(), sessions_.end(),
-                                   [](const auto& a, const auto& b) { return a.second < b.second; });
-    sessions_.erase(oldest);
-  }
-  char token[33];
-  for (int i = 0; i < 4; ++i) std::snprintf(token + i * 8, 9, "%08" PRIx32, rng_.next_u32());
-  sessions_[token] = now + options_.session_ttl;
-  return json_response(200, json{{"token", token}, {"expires_in_ms", options_.session_ttl}});
 }
 
 ApiResponse Api::dispatch(const ApiRequest& req) {
@@ -331,7 +309,6 @@ ApiResponse Api::dispatch(const ApiRequest& req) {
     if (!match) continue;
     path_matched = true;
     if (r.method != req.method) continue;
-    if (r.admin && !authorized(req.token)) return error(401, "login required");
 
     Ctx c{req, json::object(), parse_query(req.query), number};
     if (!req.body.empty()) {

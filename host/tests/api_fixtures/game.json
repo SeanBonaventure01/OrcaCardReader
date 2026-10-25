@@ -3,8 +3,7 @@
     "name": "status_initial",
     "request": {
       "method": "GET",
-      "path": "/api/status",
-      "auth": false
+      "path": "/api/status"
     },
     "response": {
       "status": 200,
@@ -376,8 +375,7 @@
     ],
     "request": {
       "method": "GET",
-      "path": "/api/taps?limit=5",
-      "auth": false
+      "path": "/api/taps?limit=5"
     },
     "response": {
       "status": 200,
@@ -459,8 +457,7 @@
     ],
     "request": {
       "method": "GET",
-      "path": "/api/board",
-      "auth": false
+      "path": "/api/board"
     },
     "response": {
       "status": 200,

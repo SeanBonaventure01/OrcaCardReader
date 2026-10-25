@@ -29,15 +29,15 @@
 {"api":["POST","/api/game/stop"],"status":200,"t":180000}
 {"out":{"id":"bonus","out":"sound"},"t":180000}
 {"out":{"duration_ms":4000,"effect":"bonus_chase","out":"leds"},"t":180000}
-{"out":{"detail":"#01 Ghost","headline":"Winner!","hold_ms":4000,"kind":"banner","note":"","out":"screen","player":"","tone":"bonus"},"t":180000}
+{"out":{"detail":"#03 Bat","headline":"Winner!","hold_ms":4000,"kind":"banner","note":"","out":"screen","player":"","tone":"bonus"},"t":180000}
 {"api":["POST","/api/game/action"],"status":200,"t":180000}
 {"out":{"id":"bonus","out":"sound"},"t":185000}
 {"out":{"duration_ms":4000,"effect":"bonus_chase","out":"leds"},"t":185000}
-{"out":{"detail":"#02 Witch","headline":"Winner!","hold_ms":4000,"kind":"banner","note":"","out":"screen","player":"","tone":"bonus"},"t":185000}
+{"out":{"detail":"#01 Ghost","headline":"Winner!","hold_ms":4000,"kind":"banner","note":"","out":"screen","player":"","tone":"bonus"},"t":185000}
 {"api":["POST","/api/game/action"],"status":200,"t":185000}
 {"out":{"id":"bonus","out":"sound"},"t":190000}
 {"out":{"duration_ms":4000,"effect":"bonus_chase","out":"leds"},"t":190000}
-{"out":{"detail":"#03 Bat","headline":"Winner!","hold_ms":4000,"kind":"banner","note":"","out":"screen","player":"","tone":"bonus"},"t":190000}
+{"out":{"detail":"#02 Witch","headline":"Winner!","hold_ms":4000,"kind":"banner","note":"","out":"screen","player":"","tone":"bonus"},"t":190000}
 {"api":["POST","/api/game/action"],"status":200,"t":190000}
 {"api":["POST","/api/game/action"],"status":409,"t":195000}
 {"expect":{"state":"ended"},"ok":true,"t":195000}

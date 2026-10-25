@@ -15,6 +15,7 @@ using Bytes = std::vector<std::uint8_t>;
 namespace cmd {
 inline constexpr std::uint8_t kGetFirmwareVersion = 0x02;
 inline constexpr std::uint8_t kSamConfiguration = 0x14;
+inline constexpr std::uint8_t kRfConfiguration = 0x32;
 inline constexpr std::uint8_t kInDataExchange = 0x40;
 inline constexpr std::uint8_t kInListPassiveTarget = 0x4A;
 inline constexpr std::uint8_t kInRelease = 0x52;
@@ -77,6 +78,9 @@ class Pn532 {
 
   std::optional<FirmwareVersion> firmware_version();
   bool sam_configure();  // normal mode, no timeout, IRQ on
+  // How many times InListPassiveTarget retries before answering "no card". The PN532's default
+  // (0xFF) waits forever, which would leave every empty-field poll to time out.
+  bool set_passive_retries(std::uint8_t retries);
   // Polls once for an ISO14443A card. nullopt if none in the field or on error (see last_error()).
   std::optional<PassiveTarget> poll_card(std::uint32_t timeout_ms = 60);
   // NTAG READ: 16 bytes starting at `page`.

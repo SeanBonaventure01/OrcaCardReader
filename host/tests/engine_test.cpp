@@ -196,6 +196,19 @@ TEST_F(EngineTest, TriggerEventAnnouncesAndEnds) {
   EXPECT_EQ(out.last_leds, "idle_breathe");
 }
 
+TEST_F(EngineTest, RushModeOnTheScreenWhileAMultiplierIsOn) {
+  start("fare_paid");
+  EXPECT_FALSE(out.last_screen.rush);
+  engine.trigger_event(EventKind::CooldownWaiver, "Free ride", seconds(30), 1.0);
+  EXPECT_FALSE(out.last_screen.rush);  // not a multiplier: no party
+  engine.end_events();
+  engine.trigger_event(EventKind::Multiplier, "Rush hour", seconds(30), 2.0);
+  EXPECT_TRUE(out.last_screen.rush);
+  EXPECT_EQ(out.last_screen.note, "Rush hour 2x");
+  advance(seconds(31));
+  EXPECT_FALSE(out.last_screen.rush);  // back to normal when it ends
+}
+
 TEST_F(EngineTest, TriggerEventValidation) {
   EXPECT_EQ(status_of([&] { engine.trigger_event(EventKind::Multiplier, "X", 1000, 2); }), 409);
   start("fare_paid");

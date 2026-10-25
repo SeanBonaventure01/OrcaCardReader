@@ -25,20 +25,11 @@ test('public leaderboard works without logging in', async () => {
   await expect(page.getByText('No riders yet')).toBeVisible();
 });
 
-test('wrong PIN is rejected, right PIN logs in', async () => {
+test('opens straight to the controls (no PIN)', async () => {
   await page.goto('/#/live');
-  await page.getByLabel('PIN').fill('0000');
-  await page.getByRole('button', { name: 'Log in' }).click();
-  await expect(page.getByRole('alert')).toHaveText('wrong PIN');
-  await page.getByLabel('PIN').fill('1031');
-  await page.getByRole('button', { name: 'Log in' }).click();
   await expect(page.getByTestId('game-name')).toHaveText('No game selected');
   await expect(page.getByTestId('conn')).toHaveClass(/on/);
-});
-
-test('login survives a reload', async () => {
-  await page.reload();
-  await expect(page.getByTestId('game-name')).toBeVisible();
+  await expect(page.getByLabel('PIN')).toHaveCount(0);
 });
 
 test('load and start Fare Paid with a custom cooldown', async () => {
@@ -61,7 +52,7 @@ test('load and start Fare Paid with a custom cooldown', async () => {
 test('a simulated tap shows in the feed, leaderboard and costume preview', async () => {
   await page.getByTestId('sim-tap').click();
   const first = page.getByTestId('feed-item').first();
-  await expect(first).toContainText(/Good until \d+:\d\d [ap]m/);  // clock synced at login
+  await expect(first).toContainText(/Good until \d+:\d\d [ap]m/);  // clock synced on connect
   await expect(first).toContainText('#1 Rider 1');
   await expect(page.getByTestId('leaderboard')).toContainText('Rider 1');
   await expect(page.getByTestId('device-screen')).toContainText(/Good until/);
@@ -137,10 +128,4 @@ test('stop ends the game and announces the winner', async () => {
   await expect(page.getByTestId('announcement')).toContainText('End of the line');
   await expect(page.getByTestId('announcement')).toContainText('Winner: Ghost');
   await expect(page.getByTestId('action-reset')).toBeVisible();
-});
-
-test('logging out returns to the PIN screen', async () => {
-  await tab('settings');
-  await page.getByRole('button', { name: 'Log out' }).click();
-  await expect(page.getByTestId('login')).toBeVisible();
 });

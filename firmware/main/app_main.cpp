@@ -1,6 +1,6 @@
 // ORCA reader costume firmware. Wires the portable core (engine, games, API) to the
-// device: display, LEDs, audio, storage, Wi-Fi/HTTP and the serial console.
-// The PN532 reader isn't fitted yet; taps come from the phone UI and the console.
+// device: display, LEDs, audio, storage, Wi-Fi/HTTP, the PN532 card reader and the serial
+// console. Simulated taps from the phone UI and the console keep working alongside the reader.
 
 #include <memory>
 
@@ -20,6 +20,7 @@
 #include "orca/games/registry.hpp"
 #include "orca/leds/leds.hpp"
 #include "orca/net/net.hpp"
+#include "orca/nfc_device/nfc_device.hpp"
 #include "orca/storage/storage.hpp"
 
 using namespace orca;
@@ -60,6 +61,8 @@ class DeviceSettings : public api::SettingsStore {
   void apply() {
     board_backlight_set(s_.brightness);
     audio::set_volume(s_.volume);
+    audio::set_voice(s_.voice);
+    display::set_effects(s_.effects);
     leds::apply_settings(s_);
   }
 
@@ -150,16 +153,25 @@ extern "C" void app_main(void) {
   });
   game_task.start();
 
-  api::ApiOptions options;
-  options.admin_pin = cfg.admin_pin;
-  static api::Api api(game_task, settings, clock, rng, options);
+  nfc_device::CardHandler cards;
+  cards.seen = [](const std::string& uid, std::optional<int> on_card) { return game_task.card_seen(uid, on_card); };
+  cards.written = [](const std::string& uid, int number, nfc_device::WriteResult r) {
+    game_task.card_written(uid, number,
+                           r == nfc_device::WriteResult::Ok       ? game::WriteResult::Ok
+                           : r == nfc_device::WriteResult::Failed ? game::WriteResult::Failed
+                                                                  : game::WriteResult::Unsupported);
+  };
+  if (esp_err_t err = nfc_device::start(BOARD_PIN_I2C_SDA, BOARD_PIN_I2C_SCL, std::move(cards)); err != ESP_OK)
+    ESP_LOGE(TAG, "card reader unavailable: %s", esp_err_to_name(err));
 
+  static api::Api api(game_task, settings);
+
+  net::on_status([](const std::string& s) { display::set_footer(s); });
   net::start_wifi(cfg.wifi, cfg.hostname);
-  display::set_footer(net::summary());
   net::start_http(api, [] { return api.hello().dump(); });
   update_idle_board(api.hello());
 
-  app::start_console(api, cfg.admin_pin);
+  app::start_console(api);
   ESP_LOGI(TAG, "READY %s, internal heap %u KB, PSRAM %u KB free", net::summary().c_str(),
            static_cast<unsigned>(heap_caps_get_free_size(MALLOC_CAP_INTERNAL) / 1024),
            static_cast<unsigned>(heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1024));

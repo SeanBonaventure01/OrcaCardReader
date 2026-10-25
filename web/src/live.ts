@@ -1,4 +1,4 @@
-import type { Board, DeviceOutput, Status, TapRecord, WsMessage } from './types';
+import type { Board, DeviceOutput, ProvisionRecord, Status, TapRecord, WsMessage } from './types';
 
 // Everything the UI shows live, updated from WebSocket push messages by a pure reducer.
 export interface LiveState {
@@ -9,9 +9,11 @@ export interface LiveState {
   announcement: { headline: string; detail: string; at: number } | null;
   device: { screen: DeviceOutput | null; leds: string | null; sound: string | null; seen: boolean };
   playersVersion: number; // bumps when players change, so pages can refetch
+  programmed: ProvisionRecord[]; // card programming results, newest first
 }
 
 export const FEED_LIMIT = 30;
+export const PROGRAMMED_LIMIT = 50;
 
 export const initialLive: LiveState = {
   status: null,
@@ -21,6 +23,7 @@ export const initialLive: LiveState = {
   announcement: null,
   device: { screen: null, leds: null, sound: null, seen: false },
   playersVersion: 0,
+  programmed: [],
 };
 
 export function reduceLive(s: LiveState, msg: WsMessage, now = Date.now()): LiveState {
@@ -45,6 +48,8 @@ export function reduceLive(s: LiveState, msg: WsMessage, now = Date.now()): Live
     }
     case 'players':
       return { ...s, playersVersion: s.playersVersion + 1 };
+    case 'provision':
+      return { ...s, programmed: [msg.record, ...s.programmed].slice(0, PROGRAMMED_LIMIT) };
     case 'announce':
       return { ...s, announcement: { headline: msg.headline, detail: msg.detail, at: now } };
     case 'device': {

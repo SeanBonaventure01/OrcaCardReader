@@ -29,7 +29,7 @@ Status: draft v0.1 · 2026-10-13 · Target: Halloween 2026-10-31
 |---|---|---|
 | Elecrow CrowPanel 5.0" (ESP32-S3-WROOM-1, 8 MB PSRAM, 800×480 RGB LCD) | MCU, display, SD slot, speaker header | — |
 | Elechouse PN532 NFC V3 | Card reader | **I²C** (shares the touch I²C header) |
-| 8 Ω speaker | Beeps, voice lines, music stings | Panel's speaker connector (onboard I²S amp) |
+| 4 Ω 3 W 70×31 mm box speaker (JST-PH 2.0 lead) | Beeps, voice lines, music stings | Panel's speaker connector (onboard I²S amp) |
 | WS2812 LED strip/ring | Ambient light and tap effects | One GPIO through the RMT peripheral |
 | MicroSD | Sounds, images, config, save state, logs | SPI (onboard slot) |
 | USB battery bank (≥ 20 000 mAh, ≥ 2.4 A port, ideally 2 ports) | Power | USB-C → panel; second port → LEDs |
@@ -119,7 +119,7 @@ firmware/
                            EventScheduler, Feedback/Theme mapping, snapshot (de)serialization
     games/                 ★ one file per game mode + registry
     api/                   ★ transport-agnostic web API: handle(ApiRequest) → ApiResponse,
-                           WebSocket message encode/decode, auth/session logic
+                           WebSocket message encode/decode
     pn532_proto/           ★ PN532 frame build/parse, checksums, NTAG payload codec
     fx_core/               ★ LED effect math + current limiter, WAV header parser, mixer
     config/                ★ config.json / sounds.json parsing + validation + defaults
@@ -204,6 +204,11 @@ struct Feedback {            // what the game wants the costume to do; the engin
 - **Debounce:** The same UID is ignored for 1.5 s after a read, and the card has to leave the field before it can tap again. This stops one long hold from counting as several taps. This is separate from game cooldowns.
 - **Health:** If the reader returns no response 3 times in a row, the task re-runs `SAMConfiguration`, then power-cycles the PN532 (RSTO pin if wired). It reports a `ReaderFault` to the engine, which shows on the admin UI.
 - **Provisioning mode:** An admin command flips nfc_task into write mode. The next tap writes the payload to the card and registers it.
+  - **Payload** (`nfc_core/card_payload.hpp`): 8 bytes in NTAG user pages 4–5: `"ORCA"`, version, player number (u16), and an XOR checksum. On a tap, the UID is matched first. If the UID is unknown but the card has a valid payload, the player number from the card is used.
+  - **Write flow:** `ntag_write(4)`, `ntag_write(5)`, then `ntag_read(4)` and `decode_payload` to verify. Only after that succeeds is the player registered and the counter advanced. If the card leaves the field mid-write, the result is a "Hold card still" prompt and a retry.
+  - **No permanent locking.** NTAG lock bits are one-way. Spare cards stay re-programmable.
+  - **Cards to buy:** 13.56 MHz ISO 14443A **NTAG213/215** (only 8 bytes are needed). Avoid 125 kHz "EM4100/proximity" cards, which the PN532 can't read at all. MIFARE Classic cards work as UID-only cards.
+  - **Phones and bank cards** (Apple/Google Pay) show random UIDs, so they can't be player cards. They show up as "Card not recognized". Real ORCA cards (DESFire) do have a stable UID, so a guest's own ORCA card can be enrolled as a UID-only player.
 
 ### 6.2 Game core (`game_core`)
 
@@ -285,7 +290,7 @@ This is a cross-game feature for timed and random windows. Any game can use it.
 SD layout:
 ```
 /sdcard/
-  config.json          wifi mode/ssid/pass, admin PIN, volume, brightness, led count/max_ma, theme
+  config.json          wifi mode/ssid/pass, hostname, open enrollment, settings (volume, voice, effects, LEDs...)
   sounds.json          sound-id → file map
   sounds/*.wav
   images/*.bin
@@ -294,7 +299,6 @@ SD layout:
   logs/taps-YYYYMMDD.csv  t, uid, player_no, game, outcome, points
 ```
 - At boot: load the config. If the SD card is missing, use defaults compiled into the firmware. Then restore the snapshot (falling back to `.bak` if the main one is corrupt) and resume the game. **Cooldowns are stored as remaining durations**, not absolute times, because the monotonic clock resets on reboot.
-- NVS holds only a mirror of Wi-Fi credentials and the admin PIN, so the device can still be reached without an SD card.
 
 ### 6.8 Networking and phone UI (`net`, `web/`)
 
@@ -303,8 +307,8 @@ SD layout:
   - `sta`: joins your phone's hotspot or the party Wi-Fi, and is reachable at `orca.local`. Use this if guests should see the leaderboard on their own phones.
   - Fallback: if STA fails for 30 s, bring up the AP.
 - **Server:** `esp_http_server` serves the gzipped SPA from flash (with SD as an override for quick iteration). It also exposes a REST API and one WebSocket.
-- **API layering:** All routing, validation, auth, and JSON shaping live in the portable `api` component as `ApiResponse handle(const ApiRequest&)`. It talks to the game task through an `EngineGateway` interface. On the device, the gateway posts an `AdminCmd` and waits on the reply token. On the host, it calls the engine directly. The `net` component only converts `httpd_req_t` to and from `ApiRequest`/`ApiResponse`, so it's around 100 lines with no logic to test.
-- **Auth:** an admin PIN is exchanged for a session token in a cookie. Read-only endpoints (leaderboard, public status) don't need auth.
+- **API layering:** All routing, validation and JSON shaping live in the portable `api` component as `ApiResponse handle(const ApiRequest&)`. It talks to the game task through an `EngineGateway` interface. On the device, the gateway posts an `AdminCmd` and waits on the reply token. On the host, it calls the engine directly. The `net` component only converts `httpd_req_t` to and from `ApiRequest`/`ApiResponse`, so it's around 100 lines with no logic to test.
+- **No login.** The costume joins the operator's phone hotspot, so only devices on that hotspot can reach it; the network is the lock. (A PIN was tried and removed: it only got in the way.)
 - **Clock sync:** the phone UI sends `Date.now()` when it connects. The device then knows the wall-clock time for logs and "at 10 pm" scheduling. Cooldowns use the monotonic clock only.
 
 **API**
@@ -394,7 +398,7 @@ Run with `cmake --build host/build && ctest`. The target is under 10 s and a pas
 | `game_core` | Player lookup/enrollment, bans, pause, the multiplier stack, Feedback→Theme mapping, snapshot save/restore, restoring remaining cooldowns, corrupt-snapshot fallback to `.bak` |
 | `games/*` | Each rule of each mode, using `FakeClock::advance()`. Cooldown boundaries (4:59.999 vs 5:00.000), event window edges, ties, empty game, a single player |
 | `EventScheduler` | Seeded random schedules are reproducible. Windows don't overlap unless allowed. Manual triggers. Save/restore during an active window. |
-| `api` | Every route: happy path, bad JSON, missing fields, out-of-range params (rejected against ParamSchema), auth required / bad PIN / expired session, unknown route → 404, wrong method → 405. WS message encoding. |
+| `api` | Every route: happy path, bad JSON, missing fields, out-of-range params (rejected against ParamSchema), unknown route → 404, wrong method → 405. WS message encoding. |
 | `pn532_proto` | Frame build/parse against byte vectors captured from the real module, bad checksum, ACK/NACK, timeouts via `LoopbackTransport`, NTAG payload encode/decode |
 | `config` | Defaults when keys are missing, invalid values clamped or rejected, unknown keys ignored |
 | `fx_core` | LED current limiter never exceeds `max_led_ma`. Effect frames are deterministic for a given t. WAV header parser rejects stereo, 8-bit, and truncated files. |

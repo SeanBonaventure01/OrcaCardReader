@@ -26,6 +26,7 @@ class OrcaSerial:
     def __init__(self, port=None, baud=115200):
         self.ser = serial.Serial(port or default_port(), baud, timeout=0.05)
         self.log = []  # every line seen, ANSI codes stripped
+        self._buf = b""  # read but not yet split into lines; kept across calls so none are lost
 
     def __enter__(self):
         return self
@@ -35,12 +36,11 @@ class OrcaSerial:
 
     def _lines(self, timeout):
         """Yields complete lines until `timeout` seconds pass."""
-        buf = b""
         deadline = time.time() + timeout
         while time.time() < deadline:
-            buf += self.ser.read(4096)
-            while b"\n" in buf:
-                raw, buf = buf.split(b"\n", 1)
+            self._buf += self.ser.read(4096)
+            while b"\n" in self._buf:
+                raw, self._buf = self._buf.split(b"\n", 1)
                 line = ANSI.sub("", raw.decode(errors="replace")).rstrip("\r")
                 self.log.append(line)
                 yield line
@@ -60,6 +60,7 @@ class OrcaSerial:
             if " READY " in line:
                 time.sleep(0.5)  # let the console prompt come up
                 self.ser.reset_input_buffer()
+                self._buf = b""
                 return boot
         raise TimeoutError("no READY within %ss:\n%s" % (timeout, "\n".join(boot[-40:])))
 

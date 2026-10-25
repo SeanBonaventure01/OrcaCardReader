@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'preact/hooks';
 
-import { act, api, live, loggedIn } from '../store';
-import type { Settings } from '../types';
+import { act, api, live } from '../store';
+import type { Settings, VoicePack } from '../types';
 import { Card } from './common';
 
-const SLIDERS: { key: keyof Settings; label: string; min: number; max: number }[] = [
+type NumberSetting = 'volume' | 'brightness' | 'led_brightness';
+const SLIDERS: { key: NumberSetting; label: string; min: number; max: number }[] = [
   { key: 'volume', label: 'Volume', min: 0, max: 100 },
   { key: 'brightness', label: 'Screen brightness', min: 5, max: 100 },
   { key: 'led_brightness', label: 'LED brightness', min: 0, max: 100 },
@@ -42,6 +43,26 @@ export function SettingsPage() {
               </label>
             ))}
             <label>
+              Voice after each tap
+              <select
+                value={settings.voice}
+                data-testid="voice"
+                onChange={(e) => patch({ voice: (e.target as HTMLSelectElement).value as VoicePack })}
+              >
+                <option value="off">Off (just the bong)</option>
+                <option value="profanity">Profanity (adults only!)</option>
+              </select>
+            </label>
+            <label class="check">
+              <input
+                type="checkbox"
+                checked={settings.effects}
+                data-testid="effects"
+                onChange={(e) => patch({ effects: (e.target as HTMLInputElement).checked })}
+              />
+              Confetti and fireworks on paid fares
+            </label>
+            <label>
               LED count
               <input type="number" min="0" max="300" value={settings.led_count} onChange={(e) => patch({ led_count: Number((e.target as HTMLInputElement).value) })} />
             </label>
@@ -65,19 +86,9 @@ export function SettingsPage() {
           Open enrollment (unknown cards join automatically)
         </label>
       </Card>
-      <Card title="Session">
-        <div class="row">
-          <button onClick={() => act(() => api.syncClock(), 'Clock synced')}>Sync clock from phone</button>
-          <button
-            class="danger"
-            onClick={async () => {
-              await api.logout().catch(() => {});
-              loggedIn.value = false;
-            }}
-          >
-            Log out
-          </button>
-        </div>
+      <Card title="Clock">
+        <p class="muted">The costume has no clock of its own; your phone sets it whenever it connects.</p>
+        <button onClick={() => act(() => api.syncClock(), 'Clock synced')}>Sync clock from phone</button>
       </Card>
     </div>
   );

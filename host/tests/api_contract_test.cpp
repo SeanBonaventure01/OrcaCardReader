@@ -75,9 +75,8 @@ std::vector<FixtureCase> load_cases() {
   return cases;
 }
 
-orca::api::ApiResponse send(orca::sim::World& world, const json& step, const std::string& token) {
-  const bool auth = step.value("auth", true);
-  return world.call(step.at("method"), step.at("path"), step.value("body", json(nullptr)), auth ? token : "");
+orca::api::ApiResponse send(orca::sim::World& world, const json& step) {
+  return world.call(step.at("method"), step.at("path"), step.value("body", json(nullptr)));
 }
 
 class ApiContract : public ::testing::TestWithParam<FixtureCase> {};
@@ -87,15 +86,13 @@ TEST_P(ApiContract, MatchesFixture) {
   orca::fakes::FakeClock clock(1000);
   orca::fakes::SeededRandom rng(1);
   orca::sim::World world(clock, rng);
-  const std::string token = world.login();
-  ASSERT_FALSE(token.empty());
 
   for (const auto& step : spec.value("setup", json::array())) {
-    auto r = send(world, step, token);
+    auto r = send(world, step);
     ASSERT_GE(r.status, 200) << "setup " << step.dump() << " -> " << r.body;
     ASSERT_LT(r.status, 300) << "setup " << step.dump() << " -> " << r.body;
   }
-  auto r = send(world, spec.at("request"), token);
+  auto r = send(world, spec.at("request"));
   const json& expect = spec.at("response");
   EXPECT_EQ(r.status, expect.at("status").get<int>()) << r.body;
   if (expect.contains("body")) {

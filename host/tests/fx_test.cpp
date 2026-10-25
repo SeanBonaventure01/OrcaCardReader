@@ -202,10 +202,47 @@ TEST(Audio, ToneLengthAndEnvelope) {
   EXPECT_EQ(std::abs(t[1100]), 12000);
 }
 
+// Energy of `x` at `freq` (Goertzel), for checking where a sound's pitch is.
+static double tone_power(const std::vector<std::int16_t>& x, double freq, std::uint32_t rate) {
+  const double w = 2 * 3.14159265358979323846 * freq / rate, c = 2 * std::cos(w);
+  double s1 = 0, s2 = 0;
+  for (auto v : x) {
+    const double s0 = v + c * s1 - s2;
+    s2 = s1;
+    s1 = s0;
+  }
+  return s1 * s1 + s2 * s2 - c * s1 * s2;
+}
+
+TEST(Audio, BongIsShapedLikeTheReader) {
+  const auto b = synth_beep("accept", 22050);
+  ASSERT_EQ(b.size(), 22050u * 750 / 1000);
+  EXPECT_EQ(b.front(), 0);  // rises from silence (no click)
+  EXPECT_EQ(b.back(), 0);   // fades to silence
+  int peak = 0;
+  for (auto v : b) peak = std::max(peak, std::abs(static_cast<int>(v)));
+  EXPECT_EQ(peak, 30000);  // near full scale: the speaker amp is the limit, not us
+  // The fundamental dominates; the old harsh 2400 Hz beep pitch is nearly absent.
+  EXPECT_GT(tone_power(b, 605.5, 22050), 10 * tone_power(b, 1815.7, 22050));
+  EXPECT_GT(tone_power(b, 605.5, 22050), 1000 * tone_power(b, 2400, 22050));
+  // It rings: still audible at 300 ms, much quieter than at 50 ms.
+  auto rms = [&](double t) {
+    double sum = 0;
+    const std::size_t i0 = static_cast<std::size_t>(t * 22050);
+    for (std::size_t i = i0; i < i0 + 441; ++i) sum += double(b[i]) * b[i];
+    return std::sqrt(sum / 441);
+  };
+  EXPECT_GT(rms(0.30), 1000);
+  EXPECT_LT(rms(0.30), rms(0.05) / 3);
+}
+
 TEST(Audio, BeepsHaveExpectedShapes) {
-  EXPECT_EQ(synth_beep("accept", 22050).size(), 22050u * 180 / 1000);
-  EXPECT_EQ(synth_beep("reject", 22050).size(), 22050u * 140 / 1000 * 2 + 22050u * 80 / 1000);
+  EXPECT_EQ(synth_beep("reject", 22050).size(), 22050u * 200 / 1000 * 2 + 22050u * 60 / 1000);
+  // Reject is pitched a fourth below accept.
+  const auto r = synth_beep("reject", 22050);
+  EXPECT_GT(tone_power(r, 605.5 * 0.75, 22050), 10 * tone_power(r, 605.5, 22050));
   EXPECT_FALSE(synth_beep("bonus", 22050).empty());
+  EXPECT_FALSE(synth_beep("event_start", 22050).empty());
   EXPECT_TRUE(synth_beep("unknown", 22050).empty());
 }
 

@@ -79,6 +79,12 @@ void Engine::broadcast_scores_if_changed() {
 void Engine::show_idle() {
   hal::ScreenCmd cmd;
   cmd.kind = hal::ScreenKind::Idle;
+  if (prov_.active) {
+    cmd.headline = "Card programming";
+    cmd.detail = "Tap card #" + std::to_string(prov_.next);
+    out_.screen(cmd);
+    return;
+  }
   cmd.headline = (game_ && state_ != GameState::None) ? games_.find(game_->info().id)->name : "";
   // Detail is only set when the reader isn't taking fares (the idle screen shows it).
   switch (state_) {
@@ -91,7 +97,10 @@ void Engine::show_idle() {
     for (const auto& w : events_.active(now())) {
       if (!cmd.note.empty()) cmd.note += " + ";
       cmd.note += w.name;
-      if (w.kind == EventKind::Multiplier) cmd.note += " " + format_mult(w.multiplier) + "x";
+      if (w.kind == EventKind::Multiplier) {
+        cmd.note += " " + format_mult(w.multiplier) + "x";
+        cmd.rush = cmd.rush || w.multiplier > 1.0;
+      }
     }
   }
   out_.screen(cmd);
@@ -137,7 +146,7 @@ std::string Engine::fill(const std::string& tmpl, const TapRecord& r, TimeMs val
   return s;
 }
 
-TapRecord Engine::tap(const std::string& uid_in) {
+TapRecord Engine::tap(const std::string& uid_in, std::optional<int> card_player) {
   auto uid = hal::CardUid::from_hex(uid_in);
   if (!uid) throw EngineError(400, "malformed card uid");
 
@@ -147,15 +156,22 @@ TapRecord Engine::tap(const std::string& uid_in) {
   rec.uid = uid->hex();
   if (auto w = wall_clock_ms()) rec.wall_ms = *w;
 
-  Player* player = players_.find_uid(rec.uid);
+  // A programmed card's number is who it is, even on a freshly wiped costume or when it
+  // replaces a lost card; blank cards are known by their UID.
+  const bool numbered = card_player && *card_player >= 1;
+  Player* player = numbered ? players_.find(*card_player) : players_.find_uid(rec.uid);
+  if (player && player->uid != rec.uid) {
+    player = &players_.bind(rec.uid, player->number);
+    broadcast(json{{"type", "players"}});
+  }
   Feedback fb;
   if (state_ != GameState::Running) {
     fb.outcome = Outcome::Closed;
-  } else if (!player && !open_enrollment_) {
+  } else if (!player && !open_enrollment_ && !numbered) {
     fb.outcome = Outcome::Unknown;
   } else {
     if (!player) {
-      player = &players_.enroll(rec.uid);
+      player = numbered ? &players_.bind(rec.uid, *card_player) : &players_.enroll(rec.uid);
       broadcast(json{{"type", "players"}});
     }
     if (player->banned) {
@@ -224,6 +240,111 @@ TapRecord Engine::tap(const std::string& uid_in) {
   return rec;
 }
 
+// ---------------------------------------------------------------- card programming
+
+void to_json(json& j, const ProvisionRecord& r) {
+  j = json{{"uid", r.uid}, {"number", r.number}, {"result", r.result}, {"message", r.message}};
+}
+
+void Engine::start_provisioning(int start_no, bool overwrite) {
+  if (start_no < 0) throw EngineError(400, "start must be at least 1");
+  prov_ = Provisioning{};
+  prov_.active = true;
+  prov_.overwrite = overwrite;
+  prov_.next = players_.next_unclaimed(start_no == 0 ? 1 : start_no);
+  show_idle();
+  broadcast_state();
+}
+
+void Engine::stop_provisioning() {
+  if (!prov_.active) return;
+  prov_.active = false;
+  show_idle();
+  broadcast_state();
+}
+
+json Engine::provisioning_json() const {
+  return json{{"active", prov_.active},
+              {"next", prov_.next},
+              {"overwrite", prov_.overwrite},
+              {"programmed", prov_.programmed},
+              {"last", prov_.last ? json(*prov_.last) : json(nullptr)}};
+}
+
+void Engine::provision_feedback(ProvisionRecord rec, hal::Tone tone, const std::string& sound,
+                                const std::string& headline) {
+  out_.sound({sound});
+  out_.leds({tone == hal::Tone::Success ? "accept_flash" : tone == hal::Tone::Error ? "reject_flash" : "cooldown_pulse",
+             2500});
+  show_idle();
+  hal::ScreenCmd screen;
+  screen.kind = hal::ScreenKind::Result;
+  screen.tone = tone;
+  screen.headline = headline;
+  screen.detail = rec.message;
+  screen.hold_ms = 2000;
+  out_.screen(screen);
+  prov_.last = rec;
+  broadcast(json{{"type", "provision"}, {"record", rec}});
+  broadcast_state();
+}
+
+std::optional<int> Engine::card_seen(const std::string& uid_in, std::optional<int> card_player) {
+  if (!prov_.active) {
+    tap(uid_in, card_player);
+    return std::nullopt;
+  }
+  auto parsed = hal::CardUid::from_hex(uid_in);
+  if (!parsed) throw EngineError(400, "malformed card uid");
+  const std::string uid = parsed->hex();
+  if (card_player && *card_player < 1) card_player.reset();
+
+  if (card_player && !prov_.overwrite) {
+    // Already programmed: make sure it's registered as its number, nothing to write.
+    const Player* p = players_.find(*card_player);
+    const bool registered = p && p->uid == uid;
+    if (!registered) {
+      players_.bind(uid, *card_player);
+      touch();
+      broadcast(json{{"type", "players"}});
+      prov_.next = players_.next_unclaimed(prov_.next);
+    }
+    provision_feedback({uid, *card_player, registered ? "already" : "adopted",
+                        (registered ? "Already programmed. Next: card #" : "Already programmed, now registered. Next: card #") +
+                            std::to_string(prov_.next)},
+                       registered ? hal::Tone::Warning : hal::Tone::Success, registered ? "reject" : "accept",
+                       "Card #" + std::to_string(*card_player));
+    return std::nullopt;
+  }
+  // A blank card already known by its UID gets its own number; anything else the next one.
+  if (!prov_.overwrite)
+    if (const Player* p = players_.find_uid(uid)) return p->number;
+  return prov_.next;
+}
+
+void Engine::card_written(const std::string& uid_in, int number, WriteResult result) {
+  auto parsed = hal::CardUid::from_hex(uid_in);
+  if (!parsed) throw EngineError(400, "malformed card uid");
+  const std::string uid = parsed->hex();
+  if (result == WriteResult::Unsupported) {
+    provision_feedback({uid, number, "unsupported", "This card can't be programmed (not an NTAG card)"},
+                       hal::Tone::Error, "reject", "Wrong card type");
+    return;
+  }
+  if (result == WriteResult::Failed) {
+    provision_feedback({uid, number, "failed", "Hold the card still and tap again"}, hal::Tone::Error, "reject",
+                       "Card #" + std::to_string(number) + " not written");
+    return;
+  }
+  players_.bind(uid, number);
+  broadcast(json{{"type", "players"}});
+  touch();
+  ++prov_.programmed;
+  if (number == prov_.next) prov_.next = players_.next_unclaimed(number + 1);
+  provision_feedback({uid, number, "written", "Next: card #" + std::to_string(prov_.next)}, hal::Tone::Success, "accept",
+                     "Card #" + std::to_string(number) + " programmed");
+}
+
 // ---------------------------------------------------------------- time
 
 void Engine::handle_event_changes(const EventScheduler::Changes& ch) {
@@ -270,6 +391,7 @@ void Engine::select_game(const std::string& id, const json& params, bool keep_sc
     throw EngineError(409, "stop the current game first");
   const GameInfo* info = games_.find(id);
   if (!info) throw EngineError(404, "unknown game: " + id);
+  stop_provisioning();
   ParamResult pr = validate_params(info->params, params);
   if (!pr.ok) throw EngineError(400, pr.error);
   auto g = games_.create(id);
@@ -286,6 +408,7 @@ void Engine::select_game(const std::string& id, const json& params, bool keep_sc
 
 void Engine::start() {
   require_game();
+  stop_provisioning();  // taps should play now, not program cards
   if (state_ != GameState::Ready) throw EngineError(409, std::string("cannot start from state ") + to_string(state_));
   state_ = GameState::Running;
   GameContext c = ctx();
@@ -424,6 +547,18 @@ void Engine::adjust_score(int number, std::int64_t delta) {
   broadcast_scores_if_changed();
 }
 
+void Engine::clear_players() {
+  if (state_ == GameState::Running || state_ == GameState::Paused) throw EngineError(409, "stop the game first");
+  players_.clear();
+  scores_.clear();
+  recent_.clear();
+  if (prov_.active) prov_.next = 1;
+  touch();
+  broadcast(json{{"type", "players"}});
+  broadcast_scores_if_changed();
+  broadcast_state();
+}
+
 void Engine::set_open_enrollment(bool open) {
   open_enrollment_ = open;
   touch();
@@ -486,7 +621,8 @@ json Engine::status_json() {
               {"total_points", scores_.total()},
               {"time_ms", t},
               {"wall_clock_ms", wall_clock_ms() ? json(*wall_clock_ms()) : json(nullptr)},
-              {"utc_offset_min", utc_offset_min_}};
+              {"utc_offset_min", utc_offset_min_},
+              {"provisioning", provisioning_json()}};
 }
 
 json Engine::players_json() const {
@@ -593,6 +729,7 @@ void Engine::restore(const json& snap) {
   }
   game_ = std::move(game);
   players_ = std::move(players);
+  prov_ = Provisioning{};  // its next number may not exist in the restored players
   scores_ = std::move(scores);
   events_ = std::move(events);
   state_ = state;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include "esp_err.h"
 #include "orca/hal/outputs.hpp"
 
@@ -11,5 +13,7 @@ esp_err_t start(int volume_percent);
 
 void play(const hal::SoundCmd& cmd);  // thread-safe; a new sound interrupts the current one
 void set_volume(int percent);
+// Voice lines after tap sounds: "profanity", or anything else (e.g. "off") for none.
+void set_voice(const std::string& pack);
 
 }  // namespace orca::audio

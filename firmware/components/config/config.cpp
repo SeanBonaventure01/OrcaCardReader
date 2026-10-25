@@ -1,5 +1,6 @@
 #include "orca/config/config.hpp"
 
+#include <algorithm>
 #include <cctype>
 #include <functional>
 #include <map>
@@ -36,18 +37,18 @@ bool valid_hostname(const std::string& h) {
   return true;
 }
 
-bool valid_pin(const std::string& p) {
-  if (p.size() < 4 || p.size() > 8) return false;
-  for (char c : p)
-    if (!std::isdigit(static_cast<unsigned char>(c))) return false;
-  return true;
-}
-
 }  // namespace
+
+const std::vector<std::string>& voice_packs() {
+  static const std::vector<std::string> packs{"off", "profanity"};
+  return packs;
+}
 
 json to_json(const Settings& s) {
   json j;
   for (const auto& [key, f] : settings_fields()) j[key] = s.*(f.member);
+  j["voice"] = s.voice;
+  j["effects"] = s.effects;
   return j;
 }
 
@@ -59,6 +60,27 @@ PatchResult apply_patch(const Settings& current, const json& patch) {
     return r;
   }
   for (auto it = patch.begin(); it != patch.end(); ++it) {
+    if (it.key() == "voice") {
+      const auto& packs = voice_packs();
+      if (!it->is_string() || std::find(packs.begin(), packs.end(), it->get<std::string>()) == packs.end()) {
+        std::string list;
+        for (const auto& p : packs) list += (list.empty() ? "" : ", ") + p;
+        r.error = "voice must be one of: " + list;
+        r.settings = current;
+        return r;
+      }
+      r.settings.voice = it->get<std::string>();
+      continue;
+    }
+    if (it.key() == "effects") {
+      if (!it->is_boolean()) {
+        r.error = "effects must be true or false";
+        r.settings = current;
+        return r;
+      }
+      r.settings.effects = it->get<bool>();
+      continue;
+    }
     auto f = settings_fields().find(it.key());
     if (f == settings_fields().end()) {
       r.error = "unknown setting: " + it.key();
@@ -98,7 +120,7 @@ ConfigResult parse_config(const std::string& text) {
     out = v.get<std::string>();
   };
 
-  static const char* kKnownTop[] = {"wifi", "hostname", "admin_pin", "open_enrollment", "settings"};
+  static const char* kKnownTop[] = {"wifi", "hostname", "open_enrollment", "settings"};
   for (auto it = j.begin(); it != j.end(); ++it) {
     bool known = false;
     for (const char* k : kKnownTop) known |= it.key() == k;
@@ -127,7 +149,6 @@ ConfigResult parse_config(const std::string& text) {
     }
   }
   get_string(j, "hostname", c.hostname, valid_hostname, "must be letters, digits and dashes");
-  get_string(j, "admin_pin", c.admin_pin, valid_pin, "must be 4-8 digits");
   if (j.contains("open_enrollment")) {
     if (j.at("open_enrollment").is_boolean())
       c.open_enrollment = j.at("open_enrollment").get<bool>();
@@ -159,7 +180,6 @@ json to_json(const DeviceConfig& c, bool include_secrets) {
     wifi["sta_password"] = c.wifi.sta_password;
   }
   json j{{"wifi", wifi}, {"hostname", c.hostname}, {"open_enrollment", c.open_enrollment}, {"settings", to_json(c.settings)}};
-  if (include_secrets) j["admin_pin"] = c.admin_pin;
   return j;
 }
 

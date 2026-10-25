@@ -157,8 +157,30 @@ function SimTap() {
   );
 }
 
+// Name a rider right after they tap: "#07 Rider 7" becomes "#07 Morticia" on the scoreboard.
+function NameRider({ no, name, onDone }: { no: number; name: string; onDone: () => void }) {
+  const [value, setValue] = useState(/^Rider \d+$/.test(name) ? '' : name);
+  const save = async (e: Event) => {
+    e.preventDefault();
+    const r = await act(() => api.updatePlayer(no, { name: value.trim() }), `#${no} is now ${value.trim()}`);
+    if (r) onDone();
+  };
+  return (
+    <form class="row name-rider" onSubmit={save}>
+      <input aria-label={`Name for rider ${no}`} placeholder="Name" maxLength={24} value={value} autoFocus onInput={(e) => setValue((e.target as HTMLInputElement).value)} />
+      <button class="primary" type="submit" disabled={!value.trim()} data-testid="save-name">
+        Save
+      </button>
+      <button type="button" onClick={onDone}>
+        Cancel
+      </button>
+    </form>
+  );
+}
+
 function Feed() {
   const feed = live.value.feed;
+  const [naming, setNaming] = useState<number | null>(null);  // seq of the tap being named
   return (
     <Card title="Live taps" testId="feed">
       {feed.length === 0 ? (
@@ -168,11 +190,18 @@ function Feed() {
           {feed.map((t) => (
             <li key={t.seq} class={`tone-${outcomeTone(t.outcome)}`} data-testid="feed-item">
               <span class="headline">{t.headline}</span>
-              <span class="who">{t.player ? `#${t.player} ${t.name}` : t.uid}</span>
+              {t.player ? (
+                <button class="who linklike" title="Name this rider" data-testid="name-rider" onClick={() => setNaming(naming === t.seq ? null : t.seq)}>
+                  #{t.player} {t.name} ✎
+                </button>
+              ) : (
+                <span class="who">{t.uid}</span>
+              )}
               <span class="pts">
                 {t.points > 0 ? `+${t.points}` : t.points !== 0 ? t.points : ''}
                 {t.multiplier > 1 && t.points > 0 ? ` (${multiplierLabel(t.multiplier)})` : ''}
               </span>
+              {naming === t.seq && <NameRider no={t.player} name={t.name} onDone={() => setNaming(null)} />}
             </li>
           ))}
         </ul>
@@ -199,9 +228,26 @@ function DevicePreview() {
   );
 }
 
+// Taps program cards instead of playing while this is on, so never let it go unnoticed.
+function ProgrammingBanner() {
+  const p = live.value.status?.provisioning;
+  if (!p?.active) return null;
+  return (
+    <div class="programming-banner" role="alert" data-testid="programming-banner">
+      <span>
+        <strong>Programming cards</strong> (next #{p.next}). Taps don't score.
+      </span>
+      <button class="danger" onClick={() => act(() => api.stopProvisioning(), 'Done programming')}>
+        Stop
+      </button>
+    </div>
+  );
+}
+
 export function LivePage() {
   return (
     <div class="grid">
+      <ProgrammingBanner />
       <GameCard />
       <DevicePreview />
       <QuickEvents />

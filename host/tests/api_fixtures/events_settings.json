@@ -15,7 +15,7 @@
       {"method": "POST", "path": "/api/game/start"},
       {"method": "POST", "path": "/api/events/trigger", "body": {"kind": "cooldown_waiver", "name": "Free ride", "duration_ms": 60000}}
     ],
-    "request": {"method": "GET", "path": "/api/status", "auth": false},
+    "request": {"method": "GET", "path": "/api/status"},
     "response": {"status": 200, "body": {"state": "running", "events": [
       {"kind": "cooldown_waiver", "name": "Free ride", "remaining_ms": 60000, "multiplier": 1.0}
     ]}}
@@ -37,12 +37,22 @@
   {
     "name": "settings_get",
     "request": {"method": "GET", "path": "/api/settings"},
-    "response": {"status": 200, "body": {"volume": 70, "brightness": 80, "led_brightness": 25, "led_count": 30, "led_max_ma": 450}}
+    "response": {"status": 200, "body": {"volume": 70, "brightness": 80, "led_brightness": 25, "led_count": 30, "led_max_ma": 450, "voice": "off", "effects": true}}
   },
   {
     "name": "settings_patch",
     "request": {"method": "PATCH", "path": "/api/settings", "body": {"volume": 35}},
     "response": {"status": 200, "body": {"volume": 35, "brightness": 80}}
+  },
+  {
+    "name": "settings_patch_voice",
+    "request": {"method": "PATCH", "path": "/api/settings", "body": {"voice": "profanity", "effects": false}},
+    "response": {"status": 200, "body": {"voice": "profanity", "effects": false, "volume": 70}}
+  },
+  {
+    "name": "settings_patch_bad_voice",
+    "request": {"method": "PATCH", "path": "/api/settings", "body": {"voice": "pirate"}},
+    "response": {"status": 400, "body": {"error": "voice must be one of: off, profanity"}}
   },
   {
     "name": "settings_patch_invalid",

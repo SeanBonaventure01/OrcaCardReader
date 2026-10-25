@@ -16,7 +16,12 @@ struct Settings {
   int led_brightness = 25;   // 0-100 %, further capped by led_max_ma
   int led_count = 30;        // 0-300 pixels
   int led_max_ma = 450;      // 50-2000 mA budget for the strip
+  std::string voice = "off"; // voice lines after the tap sound: "off" or "profanity"
+  bool effects = true;       // confetti / fireworks on paid fares
 };
+
+// The voice packs a costume can speak (Settings::voice), "off" first.
+const std::vector<std::string>& voice_packs();
 
 json to_json(const Settings& s);
 
@@ -40,8 +45,7 @@ struct WifiConfig {
 struct DeviceConfig {
   WifiConfig wifi;
   std::string hostname = "orca";  // orca.local
-  std::string admin_pin = "1031";
-  bool open_enrollment = true;
+  bool open_enrollment = false;  // only programmed cards (orca-card-game-NN) play
   Settings settings;
 };
 

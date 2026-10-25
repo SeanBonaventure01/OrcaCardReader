@@ -17,7 +17,6 @@ TEST(Config, EmptyObjectGivesDefaultsWithoutWarnings) {
   EXPECT_TRUE(r.warnings.empty());
   EXPECT_EQ(r.config.wifi.mode, "ap");
   EXPECT_EQ(r.config.wifi.ap_ssid, "ORCA-READER");
-  EXPECT_EQ(r.config.admin_pin, "1031");
   EXPECT_EQ(r.config.settings.volume, 70);
 }
 
@@ -34,7 +33,6 @@ TEST(Config, ParsesEverything) {
     // comments are allowed
     "wifi": {"mode": "sta", "sta_ssid": "Party", "sta_password": "boo", "ap_password": "spooky123"},
     "hostname": "orca-2",
-    "admin_pin": "666999",
     "open_enrollment": false,
     "settings": {"volume": 40, "brightness": 100, "led_count": 60, "led_max_ma": 900}
   })");
@@ -43,7 +41,6 @@ TEST(Config, ParsesEverything) {
   EXPECT_EQ(r.config.wifi.sta_ssid, "Party");
   EXPECT_EQ(r.config.wifi.ap_password, "spooky123");
   EXPECT_EQ(r.config.hostname, "orca-2");
-  EXPECT_EQ(r.config.admin_pin, "666999");
   EXPECT_FALSE(r.config.open_enrollment);
   EXPECT_EQ(r.config.settings.volume, 40);
   EXPECT_EQ(r.config.settings.led_count, 60);
@@ -54,21 +51,18 @@ TEST(Config, InvalidValuesFallBackIndividually) {
   auto r = parse_config(R"({
     "wifi": {"mode": "mesh", "ap_password": "short"},
     "hostname": "bad host!",
-    "admin_pin": "12ab",
     "open_enrollment": "yes",
     "settings": {"volume": 150, "brightness": 50, "leds": 3}
   })");
   EXPECT_EQ(r.config.wifi.mode, "ap");
   EXPECT_EQ(r.config.wifi.ap_password, "fareplease");
   EXPECT_EQ(r.config.hostname, "orca");
-  EXPECT_EQ(r.config.admin_pin, "1031");
-  EXPECT_TRUE(r.config.open_enrollment);
+  EXPECT_FALSE(r.config.open_enrollment);  // default: only programmed cards play
   EXPECT_EQ(r.config.settings.volume, 70);
   EXPECT_EQ(r.config.settings.brightness, 50);  // good value alongside bad ones still applies
   EXPECT_TRUE(has_warning(r, "mode"));
   EXPECT_TRUE(has_warning(r, "ap_password"));
   EXPECT_TRUE(has_warning(r, "hostname"));
-  EXPECT_TRUE(has_warning(r, "admin_pin"));
   EXPECT_TRUE(has_warning(r, "open_enrollment"));
   EXPECT_TRUE(has_warning(r, "volume"));
   EXPECT_TRUE(has_warning(r, "unknown setting: leds"));
@@ -89,7 +83,6 @@ TEST(Config, SecretsOnlyWhenAsked) {
   DeviceConfig c;
   c.wifi.sta_password = "pw";
   EXPECT_FALSE(to_json(c, false).dump().find("pw\"") != std::string::npos);
-  EXPECT_FALSE(to_json(c, false).contains("admin_pin"));
   EXPECT_EQ(to_json(c, true)["wifi"]["sta_password"], "pw");
 }
 
@@ -108,4 +101,25 @@ TEST(SettingsPatch, AnyBadKeyRejectsWholePatch) {
     EXPECT_FALSE(r.ok) << bad.dump();
     EXPECT_EQ(r.settings.volume, 70) << bad.dump();
   }
+}
+
+TEST(SettingsPatch, VoiceAndEffects) {
+  Settings s;
+  EXPECT_EQ(s.voice, "off");
+  EXPECT_TRUE(s.effects);
+  auto r = apply_patch(s, {{"voice", "profanity"}, {"effects", false}});
+  ASSERT_TRUE(r.ok) << r.error;
+  EXPECT_EQ(r.settings.voice, "profanity");
+  EXPECT_FALSE(r.settings.effects);
+  EXPECT_EQ(to_json(r.settings)["voice"], "profanity");
+  EXPECT_EQ(to_json(r.settings)["effects"], false);
+  auto bad = apply_patch(s, {{"voice", "pirate"}});
+  EXPECT_FALSE(bad.ok);
+  EXPECT_EQ(bad.error, "voice must be one of: off, profanity");
+  EXPECT_FALSE(apply_patch(s, {{"effects", 1}}).ok);
+  // Round-trips through config.json like the other settings.
+  auto c = parse_config(R"({"settings": {"voice": "profanity", "effects": false}})");
+  EXPECT_TRUE(c.warnings.empty());
+  EXPECT_EQ(c.config.settings.voice, "profanity");
+  EXPECT_FALSE(c.config.settings.effects);
 }

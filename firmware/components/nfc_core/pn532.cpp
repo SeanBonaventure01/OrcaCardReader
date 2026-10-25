@@ -142,6 +142,11 @@ std::optional<FirmwareVersion> Pn532::firmware_version() {
 
 bool Pn532::sam_configure() { return command(cmd::kSamConfiguration, {0x01, 0x00, 0x01}).has_value(); }
 
+bool Pn532::set_passive_retries(std::uint8_t retries) {
+  // CfgItem 5 (MaxRetries): MxRtyATR, MxRtyPSL, MxRtyPassiveActivation.
+  return command(cmd::kRfConfiguration, {0x05, 0xFF, 0x01, retries}).has_value();
+}
+
 std::optional<PassiveTarget> Pn532::poll_card(std::uint32_t timeout_ms) {
   auto r = command(cmd::kInListPassiveTarget, {0x01, 0x00}, timeout_ms);
   return r ? parse_passive_target(*r) : std::nullopt;

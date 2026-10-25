@@ -10,5 +10,5 @@ idf_component_register(
   SRCS wifi.cpp http.cpp
   INCLUDE_DIRS include
   REQUIRES api config
-  PRIV_REQUIRES esp_wifi esp_netif esp_event esp_http_server lwip espressif__mdns
+  PRIV_REQUIRES esp_wifi esp_netif esp_event esp_http_server esp_timer lwip espressif__mdns
   EMBED_FILES ${WEB_FILES})

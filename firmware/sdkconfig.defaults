@@ -43,3 +43,11 @@ CONFIG_ESP_CONSOLE_UART_DEFAULT=y
 
 # Sockets: 12 for the web server (phones keep WebSockets open) + DNS + mDNS
 CONFIG_LWIP_MAX_SOCKETS=16
+
+# RGB LCD bandwidth (screen tearing/glitches on full-screen redraws): the panel is fed from
+# PSRAM through bounce buffers, so PSRAM throughput and render speed both matter.
+# 64-byte cache lines speed up PSRAM (Espressif's advice for RGB panels). The 64 KB cache
+# it is usually paired with costs 32 KB of internal RAM, which Wi-Fi needs here.
+CONFIG_ESP32S3_DATA_CACHE_LINE_64B=y
+# Render (and copy) faster than the debug build does.
+CONFIG_COMPILER_OPTIMIZATION_PERF=y

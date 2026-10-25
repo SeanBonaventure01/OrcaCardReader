@@ -28,6 +28,25 @@ export interface Status {
   total_points: number;
   time_ms: number;
   wall_clock_ms: number | null;
+  provisioning: Provisioning;
+}
+
+export type ProvisionResult = 'written' | 'already' | 'adopted' | 'failed' | 'unsupported';
+
+export interface ProvisionRecord {
+  uid: string;
+  number: number;
+  result: ProvisionResult;
+  message: string;
+}
+
+// Card programming: while active, taps write player numbers onto cards.
+export interface Provisioning {
+  active: boolean;
+  next: number;
+  overwrite: boolean;
+  programmed: number;
+  last: ProvisionRecord | null;
 }
 
 export interface TapRecord {
@@ -103,7 +122,12 @@ export interface Settings {
   led_brightness: number;
   led_count: number;
   led_max_ma: number;
+  voice: VoicePack;
+  effects: boolean;
 }
+
+// Voice lines after the tap sound. "profanity" is for grown-up parties.
+export type VoicePack = 'off' | 'profanity';
 
 // Simulated hardware output (orca-sim only): what the costume's screen/speaker/LEDs did.
 export interface DeviceOutput {
@@ -125,5 +149,6 @@ export type WsMessage =
   | ({ type: 'scores' } & Board)
   | { type: 'event'; action: 'start' | 'end'; event: EventWindow }
   | { type: 'players' }
+  | { type: 'provision'; record: ProvisionRecord }
   | { type: 'announce'; headline: string; detail: string }
   | ({ type: 'device' } & DeviceOutput);

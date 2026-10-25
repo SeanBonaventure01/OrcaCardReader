@@ -8,8 +8,6 @@ let page: Page;
 test.beforeAll(async ({ browser }) => {
   page = await browser.newPage();
   await page.goto('/#/live');
-  await page.getByLabel('PIN').fill('1031');
-  await page.getByRole('button', { name: 'Log in' }).click();
   await expect(page.getByTestId('game-card')).toBeVisible();
 });
 

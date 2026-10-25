@@ -1,0 +1,36 @@
+{"out":{"detail":"Not in service","headline":"Fare Paid","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":0}
+{"out":{"id":"start","out":"sound"},"t":0}
+{"out":{"duration_ms":0,"effect":"idle_breathe","out":"leds"},"t":0}
+{"out":{"detail":"","headline":"Fare Paid","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":0}
+{"out":{"detail":"Tap card #1","headline":"Card programming","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":0}
+{"api":["POST","/api/provision"],"status":200,"t":0}
+{"out":{"id":"accept","out":"sound"},"t":2000}
+{"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":2000}
+{"out":{"detail":"Tap card #2","headline":"Card programming","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":2000}
+{"out":{"detail":"Next: card #2","headline":"Card #1 programmed","hold_ms":2000,"kind":"result","note":"","out":"screen","player":"","tone":"success"},"t":2000}
+{"result":{"provision":{"message":"Next: card #2","number":1,"result":"written","uid":"04C0000001"}},"t":2000,"tap":"04C0000001"}
+{"expect":{"players":1},"ok":true,"t":2000}
+{"out":{"id":"accept","out":"sound"},"t":4000}
+{"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":4000}
+{"out":{"detail":"Tap card #3","headline":"Card programming","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":4000}
+{"out":{"detail":"Next: card #3","headline":"Card #2 programmed","hold_ms":2000,"kind":"result","note":"","out":"screen","player":"","tone":"success"},"t":4000}
+{"result":{"provision":{"message":"Next: card #3","number":2,"result":"written","uid":"04C0000002"}},"t":4000,"tap":"04C0000002"}
+{"expect":{"players":2},"ok":true,"t":4000}
+{"out":{"id":"accept","out":"sound"},"t":8000}
+{"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":8000}
+{"out":{"detail":"Tap card #4","headline":"Card programming","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":8000}
+{"out":{"detail":"Next: card #4","headline":"Card #3 programmed","hold_ms":2000,"kind":"result","note":"","out":"screen","player":"","tone":"success"},"t":8000}
+{"result":{"provision":{"message":"Next: card #4","number":3,"result":"written","uid":"04C0000003"}},"t":8000,"tap":"04C0000003"}
+{"expect":{"players":3},"ok":true,"t":8000}
+{"out":{"detail":"","headline":"Fare Paid","hold_ms":0,"kind":"idle","note":"","out":"screen","player":"","tone":"neutral"},"t":10000}
+{"api":["POST","/api/provision/stop"],"status":200,"t":10000}
+{"out":{"id":"accept","out":"sound"},"t":12000}
+{"out":{"duration_ms":2500,"effect":"accept_flash","out":"leds"},"t":12000}
+{"out":{"detail":"+1 pt · Balance 1","headline":"Good for 5:00","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"#02 Rider 2","tone":"success"},"t":12000}
+{"result":{"balance":1,"detail":"+1 pt · Balance 1","headline":"Good for 5:00","multiplier":1.0,"name":"Rider 2","outcome":"accepted","player":2,"points":1,"seq":1,"t":12000,"uid":"04C0000002"},"t":12000,"tap":"04C0000002"}
+{"expect":{"outcome":"accepted","score":{"04C0000002":1}},"ok":true,"t":12000}
+{"out":{"id":"reject","out":"sound"},"t":14000}
+{"out":{"duration_ms":2500,"effect":"reject_flash","out":"leds"},"t":14000}
+{"out":{"detail":"Please see the operator","headline":"Card not recognized","hold_ms":2500,"kind":"result","note":"","out":"screen","player":"","tone":"error"},"t":14000}
+{"result":{"balance":0,"detail":"Please see the operator","headline":"Card not recognized","multiplier":1.0,"name":"","outcome":"unknown","player":0,"points":0,"seq":2,"t":14000,"uid":"04C0000099"},"t":14000,"tap":"04C0000099"}
+{"expect":{"outcome":"unknown","players":3},"ok":true,"t":14000}

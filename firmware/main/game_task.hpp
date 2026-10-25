@@ -4,6 +4,7 @@
 // GameTask::with_engine(), which runs a function on game_task and waits for the result.
 
 #include <functional>
+#include <optional>
 #include <string>
 
 #include "orca/api/api.hpp"
@@ -25,8 +26,10 @@ class GameTask : public api::EngineGateway {
   // Runs `fn` on game_task. Rethrows EngineError; throws EngineError(503) if game_task is stuck.
   json with_engine(const std::function<json(game::Engine&)>& fn) override;
 
-  // A physical card tap from the NFC task (fire-and-forget).
-  void tap(const std::string& uid);
+  // A card the reader saw (from nfc_task): an ordinary tap, or while programming cards, the
+  // player number to write onto it. See Engine::card_seen.
+  std::optional<int> card_seen(const std::string& uid, std::optional<int> card_player);
+  void card_written(const std::string& uid, int number, game::WriteResult result);
 
  private:
   static void run(void* self);

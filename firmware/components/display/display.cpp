@@ -1,6 +1,8 @@
 #include "orca/display/display.hpp"
 
 #include <atomic>
+#include <cctype>
+#include <cmath>
 #include <variant>
 
 #include "assets/orca_splash.h"
@@ -10,6 +12,8 @@
 #include "esp_timer.h"
 #include "orca/board/board.h"
 #include "orca/device/mailbox.hpp"
+#include "orca/fx/particles.hpp"
+#include "orca/fx/rainbow.hpp"
 #include "sdkconfig.h"
 
 extern const std::uint8_t orca_splash_start[] asm("_binary_orca_splash_rgb565_start");
@@ -43,6 +47,7 @@ using UiMsg = std::variant<hal::ScreenCmd, BoardMsg, FooterMsg, ClockMsg>;
 
 device::Mailbox<UiMsg>* g_mailbox = nullptr;
 std::atomic<std::uint32_t> g_led_rgb{0};
+std::atomic<bool> g_effects{true};
 
 // ---- LVGL objects: only the UI task touches these, under the port lock
 lv_obj_t* bar_date;
@@ -229,6 +234,155 @@ void build_banner() {
   lv_obj_set_hidden(banner, true);
 }
 
+// ---- confetti / fireworks: one small rectangle per particle slot, above every screen
+fx::Particles* particles;
+lv_obj_t* sparks[fx::Particles::kMax];
+std::int64_t particles_ms = 0;  // when they were last stepped
+bool sparks_shown = false;
+
+void build_effects() {
+  particles = new fx::Particles(BOARD_LCD_H_RES, BOARD_LCD_V_RES, static_cast<std::uint32_t>(esp_timer_get_time()));
+  for (auto& o : sparks) {
+    o = lv_obj_create(lv_layer_top());
+    lv_obj_remove_style_all(o);
+    lv_obj_set_style_bg_opa(o, LV_OPA_COVER, 0);
+    lv_obj_set_style_radius(o, 2, 0);
+    lv_obj_remove_flag(o, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
+    lv_obj_set_hidden(o, true);
+  }
+}
+
+// ---- Rush Hour party mode: a rainbow "LED ring" chasing around the screen edge (above every
+// screen), the event name and multiplier pulsing in the columns beside the artwork, and
+// fireworks now and then while the reader is idle.
+constexpr int kRingSegments = 40;  // 12 along the top and bottom, 8 down each side
+constexpr int kRingThickness = 12;
+lv_obj_t* rush_ring[kRingSegments];
+lv_obj_t* rush_name[2];  // left and right columns
+lv_obj_t* rush_mult[2];
+bool rush_on = false;
+std::int64_t rush_since = 0;
+std::int64_t next_ambient_burst = 0;
+
+void build_rush() {
+  // Segments clockwise from the top-left corner.
+  const int w = BOARD_LCD_H_RES, h = BOARD_LCD_V_RES, t = kRingThickness;
+  int i = 0;
+  auto seg = [&](int x, int y, int sw, int sh) {
+    lv_obj_t* o = lv_obj_create(lv_layer_top());
+    lv_obj_remove_style_all(o);
+    lv_obj_set_style_bg_opa(o, LV_OPA_COVER, 0);
+    lv_obj_remove_flag(o, static_cast<lv_obj_flag_t>(LV_OBJ_FLAG_CLICKABLE | LV_OBJ_FLAG_SCROLLABLE));
+    lv_obj_set_pos(o, x, y);
+    lv_obj_set_size(o, sw, sh);
+    lv_obj_set_hidden(o, true);
+    rush_ring[i++] = o;
+  };
+  for (int k = 0; k < 12; ++k) seg(k * w / 12, 0, w / 12 + 1, t);                      // top, left to right
+  for (int k = 0; k < 8; ++k) seg(w - t, t + k * (h - 2 * t) / 8, t, (h - 2 * t) / 8 + 1);  // right, down
+  for (int k = 11; k >= 0; --k) seg(k * w / 12, h - t, w / 12 + 1, t);                 // bottom, right to left
+  for (int k = 7; k >= 0; --k) seg(0, t + k * (h - 2 * t) / 8, t, (h - 2 * t) / 8 + 1);    // left, up
+
+  for (int side = 0; side < 2; ++side) {
+    const int x = side == 0 ? -(BOARD_LCD_H_RES / 2 - 82) : BOARD_LCD_H_RES / 2 - 82;
+    rush_name[side] = label(idle_scr, &lv_font_montserrat_28, kWhite);
+    lv_obj_set_style_text_align(rush_name[side], LV_TEXT_ALIGN_CENTER, 0);
+    lv_obj_align(rush_name[side], LV_ALIGN_CENTER, x, -60);
+    rush_mult[side] = label(idle_scr, &lv_font_montserrat_48, kGold);
+    lv_obj_align(rush_mult[side], LV_ALIGN_CENTER, x, 40);
+    lv_obj_set_hidden(rush_name[side], true);
+    lv_obj_set_hidden(rush_mult[side], true);
+  }
+}
+
+// "Rush hour 2x" -> name "RUSH\nHOUR" (one word per line, to fit a column) and "2x".
+void set_rush_text(const std::string& note) {
+  std::string name = note, mult;
+  const auto sp = note.rfind(' ');
+  if (sp != std::string::npos && note.size() > sp + 1 && note.back() == 'x') {
+    name = note.substr(0, sp);
+    mult = note.substr(sp + 1);
+  }
+  if (const auto plus = name.find(" + "); plus != std::string::npos) name = name.substr(0, plus);
+  for (auto& ch : name) ch = ch == ' ' ? '\n' : static_cast<char>(std::toupper(static_cast<unsigned char>(ch)));
+  for (int side = 0; side < 2; ++side) {
+    lv_label_set_text(rush_name[side], ascii_only(name).c_str());
+    lv_label_set_text(rush_mult[side], ascii_only(mult).c_str());
+    lv_obj_align(rush_name[side], LV_ALIGN_CENTER, side == 0 ? -(BOARD_LCD_H_RES / 2 - 82) : BOARD_LCD_H_RES / 2 - 82, -60);
+  }
+}
+
+void set_rush(bool on, const std::string& note, std::int64_t now) {
+  if (on) set_rush_text(note);
+  if (on == rush_on) return;
+  rush_on = on;
+  rush_since = now;
+  next_ambient_burst = now + 1500;
+  for (auto* o : rush_ring) lv_obj_set_hidden(o, !on);
+  for (int side = 0; side < 2; ++side) {
+    lv_obj_set_hidden(rush_name[side], !on);
+    lv_obj_set_hidden(rush_mult[side], !on);
+  }
+}
+
+void tick_rush(std::int64_t now) {
+  if (!rush_on) return;
+  const auto colors = fx::rainbow_ring(kRingSegments, now - rush_since);
+  for (int i = 0; i < kRingSegments; ++i) lv_obj_set_style_bg_color(rush_ring[i], lv_color_hex(colors[i]), 0);
+  // The words cycle through the rainbow; the multiplier pulses bright and dim.
+  const float t = static_cast<float>(now - rush_since) / 1000.0f;
+  const lv_color_t name_color = lv_color_hex(fx::hsv(t * 0.5f, 0.8f, 1.0f));
+  const lv_opa_t pulse = static_cast<lv_opa_t>(150 + 105 * (0.5f + 0.5f * std::sin(t * 6.0f)));
+  for (int side = 0; side < 2; ++side) {
+    lv_obj_set_style_text_color(rush_name[side], name_color, 0);
+    lv_obj_set_style_text_opa(rush_mult[side], pulse, 0);
+  }
+  // Fireworks every few seconds while nobody's tapping (paid fares get their own).
+  if (g_effects && now >= next_ambient_burst && lv_screen_active() == idle_scr && !particles->active()) {
+    particles->fireworks(1, 20);
+    particles_ms = now;
+    next_ambient_burst = now + 3000;
+  }
+}
+
+// A paid fare gets confetti or fireworks (at random); a bonus gets both.
+void start_effects(hal::Tone tone, std::int64_t now) {
+  if (!g_effects || (tone != hal::Tone::Success && tone != hal::Tone::Bonus)) return;
+  particles->clear();
+  const bool both = tone == hal::Tone::Bonus;
+  const bool fireworks = both || (esp_timer_get_time() / 1000) % 2;
+  if (fireworks) particles->fireworks(both ? 2 : 3, 24);
+  if (!fireworks || both) particles->confetti(both ? 40 : 60);
+  particles_ms = now;
+}
+
+void tick_effects(std::int64_t now) {
+  if (!particles->active()) {
+    if (sparks_shown) {
+      for (auto& o : sparks) lv_obj_set_hidden(o, true);
+      sparks_shown = false;
+    }
+    return;
+  }
+  particles->step(static_cast<float>(std::min<std::int64_t>(now - particles_ms, 100)) / 1000.0f);
+  particles_ms = now;
+  const auto& ps = particles->particles();
+  for (std::size_t i = 0; i < fx::Particles::kMax; ++i) {
+    if (i >= ps.size() || !fx::Particles::visible(ps[i])) {
+      lv_obj_set_hidden(sparks[i], true);
+      continue;
+    }
+    const auto& p = ps[i];
+    const int w = static_cast<int>(fx::Particles::drawn_width(p)), h = static_cast<int>(p.h);
+    lv_obj_set_size(sparks[i], w, h);
+    lv_obj_set_pos(sparks[i], static_cast<int>(p.x) - w / 2, static_cast<int>(p.y) - h / 2);
+    lv_obj_set_style_bg_color(sparks[i], lv_color_hex(p.color), 0);
+    lv_obj_set_style_bg_opa(sparks[i], fx::Particles::opacity(p), 0);
+    lv_obj_set_hidden(sparks[i], false);
+  }
+  sparks_shown = true;
+}
+
 void build_led_bar() {
 #if CONFIG_ORCA_LED_PREVIEW
   led_bar = lv_obj_create(lv_layer_top());
@@ -259,6 +413,7 @@ void update_bar_label() {
 void apply(const hal::ScreenCmd& c, std::int64_t now) {
   switch (c.kind) {
     case hal::ScreenKind::Idle:
+      set_rush(c.rush, c.note, now);
       game_label = c.headline;
       event_note = c.note;
       taking_fares = c.detail.empty();
@@ -268,6 +423,7 @@ void apply(const hal::ScreenCmd& c, std::int64_t now) {
       if (now >= result_until && now >= board_until) lv_screen_load(idle_scr);
       break;
     case hal::ScreenKind::Result: {
+      start_effects(c.tone, now);
       show_icon(c.tone);
       lv_label_set_text(result_headline, ascii_only(c.headline).c_str());
       std::string detail = c.detail;
@@ -358,6 +514,8 @@ void ui_task(void*) {
     }
     tick_clock(now);
     tick_board_rotation(now);
+    tick_rush(now);
+    tick_effects(now);
 #if CONFIG_ORCA_LED_PREVIEW
     const std::uint32_t rgb = g_led_rgb.load();
     if (rgb != shown_led) {
@@ -448,6 +606,8 @@ esp_err_t start(esp_lcd_panel_handle_t panel) {
   build_status_bar();
   build_banner();
   build_led_bar();
+  build_rush();     // ring under the sparks: created first, so drawn first
+  build_effects();
   lv_screen_load(idle_scr);
   lvgl_port_unlock();
 
@@ -468,6 +628,8 @@ void set_board(std::vector<BoardLine> top) {
 void set_footer(const std::string& text) {
   if (g_mailbox) g_mailbox->post(UiMsg{FooterMsg{text}});
 }
+
+void set_effects(bool on) { g_effects = on; }
 
 void set_wall_clock(std::int64_t epoch_ms, int utc_offset_min) {
   if (g_mailbox) g_mailbox->post(UiMsg{ClockMsg{epoch_ms, utc_offset_min}});

@@ -1,19 +1,20 @@
 import { useEffect, useState } from 'preact/hooks';
 
 import { BoardPage } from './components/BoardPage';
+import { CardsPage } from './components/CardsPage';
 import { EventsPage } from './components/EventsPage';
 import { GamesPage } from './components/GamesPage';
 import { LivePage } from './components/LivePage';
-import { Login } from './components/Login';
 import { PlayersPage } from './components/PlayersPage';
 import { SettingsPage } from './components/SettingsPage';
 import { stateLabel } from './format';
-import { connected, live, loggedIn, toast } from './store';
+import { connected, live, toast } from './store';
 
 const TABS = [
   { route: 'live', label: 'Live' },
   { route: 'games', label: 'Games' },
   { route: 'players', label: 'Riders' },
+  { route: 'cards', label: 'Cards' },
   { route: 'events', label: 'Events' },
   { route: 'settings', label: 'Settings' },
 ] as const;
@@ -59,28 +60,21 @@ export function App() {
         {s && <span class={`chip state-${s.state}`}>{stateLabel[s.state]}</span>}
       </header>
       <Announcement />
-      {!loggedIn.value ? (
-        <main>
-          <Login />
-        </main>
-      ) : (
-        <>
-          <main>
-            {route === 'games' && <GamesPage />}
-            {route === 'players' && <PlayersPage />}
-            {route === 'events' && <EventsPage />}
-            {route === 'settings' && <SettingsPage />}
-            {!['games', 'players', 'events', 'settings'].includes(route) && <LivePage />}
-          </main>
-          <nav class="tabs">
-            {TABS.map((t) => (
-              <a key={t.route} href={`#/${t.route}`} class={route === t.route ? 'active' : ''} data-testid={`tab-${t.route}`}>
-                {t.label}
-              </a>
-            ))}
-          </nav>
-        </>
-      )}
+      <main>
+        {route === 'games' && <GamesPage />}
+        {route === 'players' && <PlayersPage />}
+        {route === 'cards' && <CardsPage />}
+        {route === 'events' && <EventsPage />}
+        {route === 'settings' && <SettingsPage />}
+        {!['games', 'players', 'cards', 'events', 'settings'].includes(route) && <LivePage />}
+      </main>
+      <nav class="tabs">
+        {TABS.map((t) => (
+          <a key={t.route} href={`#/${t.route}`} class={route === t.route ? 'active' : ''} data-testid={`tab-${t.route}`}>
+            {t.label}
+          </a>
+        ))}
+      </nav>
       {toast.value && (
         <div class={toast.value.error ? 'toast error' : 'toast'} role="status" data-testid="toast">
           {toast.value.text}

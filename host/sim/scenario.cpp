@@ -40,12 +40,10 @@ class Runner {
     clock_ = std::make_unique<fakes::FakeClock>(0);
     world_ = std::make_unique<World>(*clock_, rng_);
     if (snapshot) world_->engine.restore(*snapshot);
-    token_ = world_->login();
-    if (token_.empty()) throw std::runtime_error("login failed");
   }
 
   json call(const std::string& method, const std::string& path, const json& body = nullptr) {
-    auto r = world_->call(method, path, body, token_);
+    auto r = world_->call(method, path, body);
     json out = json::parse(r.body, nullptr, false);
     if (r.status >= 300) last_error_ = std::to_string(r.status) + " " + r.body;
     out["_status"] = r.status;
@@ -164,7 +162,6 @@ class Runner {
   fakes::SeededRandom rng_;
   std::unique_ptr<fakes::FakeClock> clock_;
   std::unique_ptr<World> world_;
-  std::string token_;
   std::string last_error_;
   std::map<std::string, std::string> uids_;
   TimeMs elapsed_ = 0;

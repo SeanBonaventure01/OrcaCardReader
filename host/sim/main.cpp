@@ -93,9 +93,8 @@ int cmd_repl(int argc, char** argv) {
   fakes::FakeClock clock(0);
   fakes::SeededRandom rng(static_cast<std::uint64_t>(std::stoull(flag(argc, argv, "--seed", "1"))));
   sim::World world(clock, rng);
-  const std::string token = world.login();
   auto call = [&](const std::string& m, const std::string& p, const json& body = nullptr) {
-    auto r = world.call(m, p, body, token);
+    auto r = world.call(m, p, body);
     if (r.status >= 300) std::cout << "  ! " << r.status << " " << r.body << "\n";
     return json::parse(r.body, nullptr, false);
   };
@@ -221,9 +220,7 @@ int cmd_serve(int argc, char** argv) {
 
   ScaledClock clock(speed);
   fakes::SeededRandom rng(static_cast<std::uint64_t>(std::stoull(flag(argc, argv, "--seed", "1"))));
-  api::ApiOptions options;
-  options.admin_pin = flag(argc, argv, "--pin", "1031");
-  sim::World world(clock, rng, options);
+  sim::World world(clock, rng);
   sim::SimServer server(world, web);
   world.listeners.push_back([&](const json& m) { server.broadcast(m); });
 
@@ -245,8 +242,8 @@ int cmd_serve(int argc, char** argv) {
   std::signal(SIGINT, [](int) { g_stop = true; });
   std::signal(SIGTERM, [](int) { g_stop = true; });
   std::signal(SIGPIPE, SIG_IGN);
-  std::cerr << "orca-sim serving on http://localhost:" << port << " (speed " << speed << "x, PIN "
-            << options.admin_pin << ")" << (web.empty() ? "" : ", web UI from " + web) << "\n";
+  std::cerr << "orca-sim serving on http://localhost:" << port << " (speed " << speed << "x)"
+            << (web.empty() ? "" : ", web UI from " + web) << "\n";
 
   // Ticker: drives the engine like game_task, forwards simulated hardware output, persists.
   std::thread ticker([&] {

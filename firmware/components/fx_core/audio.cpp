@@ -102,19 +102,62 @@ std::vector<std::int16_t> synth_tone(std::uint32_t rate, double freq, std::uint3
   return out;
 }
 
+const std::vector<Partial> kOrcaBong = {
+    {605.5, 0.0, 0.020, -58.0},    {1210.1, -18.1, 0.037, -121.4}, {1815.7, -5.2, 0.029, -163.1},
+    {2415.3, -20.8, 0.023, -153.4}, {3017.8, -14.1, 0.019, -152.9}, {3623.3, -25.5, 0.019, -107.4},
+    {4230.3, -18.6, 0.033, -277.2},
+};
+
+std::vector<std::int16_t> synth_partials(std::uint32_t rate, const std::vector<Partial>& partials, double pitch,
+                                         std::uint32_t ms, int peak) {
+  constexpr double kTwoPi = 2 * 3.14159265358979323846;
+  const std::size_t n = static_cast<std::size_t>(rate) * ms / 1000;
+  const std::size_t fade = std::min<std::size_t>(rate / 10, n / 4);
+  std::vector<double> acc(n, 0.0);
+  for (const auto& p : partials) {
+    const double amp = std::pow(10.0, p.level_db / 20);
+    const double attack = std::max(p.attack_s, 0.012);  // shorter attacks click
+    const std::size_t attack_n = static_cast<std::size_t>(attack * rate);
+    const double decay = std::pow(10.0, p.decay_db_per_s / 20 / rate);  // per-sample factor
+    // Recurrences instead of sin()/pow() per sample: the ESP32-S3 has no double-precision FPU.
+    const double w = kTwoPi * p.freq_hz * pitch / rate, cw = std::cos(w), sw = std::sin(w);
+    double s = 0, c = 1, env = 1;
+    for (std::size_t i = 0; i < n; ++i) {
+      double e;
+      if (i < attack_n) {
+        e = 0.5 - 0.5 * std::cos(3.14159265358979323846 * static_cast<double>(i) / static_cast<double>(attack_n));
+      } else {
+        e = env;
+        env *= decay;
+      }
+      acc[i] += amp * e * s;
+      const double ns = s * cw + c * sw;
+      c = c * cw - s * sw;
+      s = ns;
+    }
+  }
+  for (std::size_t i = 0; i < fade; ++i) acc[n - 1 - i] *= static_cast<double>(i) / fade;
+  double max = 1e-9;
+  for (double v : acc) max = std::max(max, std::abs(v));
+  std::vector<std::int16_t> out(n);
+  for (std::size_t i = 0; i < n; ++i) out[i] = static_cast<std::int16_t>(std::lround(acc[i] / max * peak));
+  return out;
+}
+
 std::vector<std::int16_t> synth_beep(const std::string& id, std::uint32_t rate) {
   auto gap = [&](std::uint32_t ms) { return std::vector<std::int16_t>(rate * ms / 1000, 0); };
   auto cat = [](std::vector<std::int16_t> a, const std::vector<std::int16_t>& b) {
     a.insert(a.end(), b.begin(), b.end());
     return a;
   };
-  if (id == "accept") return synth_tone(rate, 2400, 180);
-  if (id == "reject") return cat(cat(synth_tone(rate, 700, 140), gap(80)), synth_tone(rate, 700, 140));
-  if (id == "bonus") return cat(cat(synth_tone(rate, 2000, 90), gap(30)), synth_tone(rate, 2800, 160));
-  if (id == "start" || id == "event_start")
-    return cat(cat(synth_tone(rate, 1200, 100), synth_tone(rate, 1600, 100)), synth_tone(rate, 2000, 160));
-  if (id == "end" || id == "event_end")
-    return cat(cat(synth_tone(rate, 2000, 100), synth_tone(rate, 1600, 100)), synth_tone(rate, 1200, 160));
+  auto bong = [&](double pitch, std::uint32_t ms) { return synth_partials(rate, kOrcaBong, pitch, ms); };
+  // Musical intervals relative to the reader's own pitch.
+  constexpr double kFourthDown = 0.75, kThird = 1.26, kFourth = 4.0 / 3, kFifth = 1.5;
+  if (id == "accept") return bong(1.0, 750);
+  if (id == "reject") return cat(cat(bong(kFourthDown, 200), gap(60)), bong(kFourthDown, 200));
+  if (id == "bonus") return cat(bong(1.0, 140), bong(kFourth, 650));
+  if (id == "start" || id == "event_start") return cat(cat(bong(1.0, 140), bong(kThird, 140)), bong(kFifth, 700));
+  if (id == "end" || id == "event_end") return cat(cat(bong(kFifth, 140), bong(kThird, 140)), bong(1.0, 700));
   return {};
 }
 

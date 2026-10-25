@@ -2,15 +2,12 @@
 
 #include <functional>
 #include <map>
-#include <mutex>
 #include <string>
 #include <vector>
 
 #include "nlohmann/json.hpp"
 #include "orca/config/config.hpp"
 #include "orca/game/engine.hpp"
-#include "orca/hal/clock.hpp"
-#include "orca/hal/random.hpp"
 
 namespace orca::api {
 
@@ -22,7 +19,6 @@ struct ApiRequest {
   std::string path;    // without the query string
   std::string query;   // raw, e.g. "limit=5"
   std::string body;
-  std::string token;   // from "Authorization: Bearer <t>" or ?token=
 };
 
 struct ApiResponse {
@@ -47,17 +43,11 @@ class SettingsStore {
   virtual void set(const config::Settings& s) = 0;
 };
 
-struct ApiOptions {
-  std::string admin_pin = "1031";
-  TimeMs session_ttl = hal::minutes(12 * 60);
-  std::size_t max_sessions = 16;
-  int max_failed_logins = 5;
-  TimeMs lockout = hal::seconds(60);
-};
-
+// There's no login: the costume is only reachable from the operator's phone hotspot (or its
+// own WPA2 network), so the network is the lock.
 class Api {
  public:
-  Api(EngineGateway& engine, SettingsStore& settings, const hal::Clock& clock, hal::Random& rng, ApiOptions options);
+  Api(EngineGateway& engine, SettingsStore& settings);
 
   // Thread-safe. Never throws.
   ApiResponse handle(const ApiRequest& req);
@@ -78,27 +68,16 @@ class Api {
   struct Route {
     std::string method;
     std::vector<std::string> segments;  // "{no}" matches a positive integer
-    bool admin;
     Handler handler;
   };
 
-  void add(const std::string& method, const std::string& pattern, bool admin, Handler h);
+  void add(const std::string& method, const std::string& pattern, Handler h);
   ApiResponse dispatch(const ApiRequest& req);
-  bool authorized(const std::string& token);
-  ApiResponse login(Ctx& c);
   json engine(const std::function<json(game::Engine&)>& fn) { return engine_.with_engine(fn); }
 
   EngineGateway& engine_;
   SettingsStore& settings_;
-  const hal::Clock& clock_;
-  hal::Random& rng_;
-  ApiOptions options_;
   std::vector<Route> routes_;
-
-  std::mutex mutex_;  // guards sessions and login throttling
-  std::map<std::string, TimeMs> sessions_;  // token -> expiry
-  int failed_logins_ = 0;
-  TimeMs locked_until_ = 0;
 };
 
 }  // namespace orca::api

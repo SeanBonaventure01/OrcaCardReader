@@ -19,16 +19,9 @@ namespace {
 
 const std::map<std::string, std::string> kCors = {
     {"Access-Control-Allow-Origin", "*"},
-    {"Access-Control-Allow-Headers", "Authorization, Content-Type"},
-    {"Access-Control-Allow-Methods", "GET, POST, PATCH, OPTIONS"},
+    {"Access-Control-Allow-Headers", "Content-Type"},
+    {"Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS"},
 };
-
-std::string bearer_token(const HttpRequest& req) {
-  auto it = req.headers.find("authorization");
-  if (it != req.headers.end() && it->second.rfind("Bearer ", 0) == 0) return it->second.substr(7);
-  auto q = api::Api::parse_query(req.query);
-  return q.count("token") ? q["token"] : "";
-}
 
 }  // namespace
 
@@ -128,7 +121,7 @@ void SimServer::serve_connection(int fd) {
   if (req.method == "OPTIONS") {
     response = http_response(204, "", "", kCors);
   } else if (req.path.rfind("/api/", 0) == 0) {
-    api::ApiRequest areq{req.method, req.path, req.query, req.body, bearer_token(req)};
+    api::ApiRequest areq{req.method, req.path, req.query, req.body};
     const api::ApiResponse ares = world_.api.handle(areq);
     response = http_response(ares.status, ares.content_type, ares.body, kCors);
   } else {

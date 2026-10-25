@@ -20,6 +20,16 @@ class PlayerRegistry {
   // Adds a player for `uid`. Empty name -> "Rider <n>". Throws EngineError(409) if the
   // UID is already enrolled.
   Player& enroll(const std::string& uid, const std::string& name = "");
+  // Adds a player with a specific number (a programmed card carries its number). Throws
+  // EngineError(409) if the UID is enrolled or the number is taken, 400 if number < 1.
+  Player& enroll_as(const std::string& uid, int number, const std::string& name = "");
+  // Makes card `uid` player `number` (a programmed card's number is who it is): creates the
+  // player if needed, and takes the card away from any other player, and the player's old
+  // card away from it (a replacement card keeps the score). Such players have an empty uid.
+  Player& bind(const std::string& uid, int number);
+  // The smallest player number >= `from` that no card plays as: no player has it, or its
+  // player's card was replaced (empty uid), so a new card can take it over.
+  int next_unclaimed(int from = 1) const;
 
   const std::vector<Player>& all() const { return players_; }
   std::size_t size() const { return players_.size(); }

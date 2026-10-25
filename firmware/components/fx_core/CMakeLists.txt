@@ -1,5 +1,6 @@
-# Portable (★) component: LED effect rendering + current limiting, audio helpers.
-set(srcs leds.cpp audio.cpp)
+# Portable (★) component: LED effect rendering + current limiting, audio helpers, voice lines
+# and confetti/fireworks particles.
+set(srcs leds.cpp audio.cpp voice.cpp particles.cpp rainbow.cpp)
 if(ESP_PLATFORM)
   idf_component_register(SRCS ${srcs} INCLUDE_DIRS include REQUIRES nlohmann_json)
 else()

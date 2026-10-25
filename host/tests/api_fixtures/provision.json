@@ -1,0 +1,73 @@
+[
+  {
+    "name": "provision_start",
+    "request": {"method": "POST", "path": "/api/provision", "body": {}},
+    "response": {"status": 200, "body": {"active": true, "next": 1, "overwrite": false, "programmed": 0, "last": null}}
+  },
+  {
+    "name": "provision_start_at_number",
+    "setup": [{"method": "POST", "path": "/api/players", "body": {"uid": "04000001"}}],
+    "request": {"method": "POST", "path": "/api/provision", "body": {"start": 1, "overwrite": true}},
+    "response": {"status": 200, "body": {"active": true, "next": 2, "overwrite": true, "programmed": 0, "last": null}}
+  },
+  {
+    "name": "provision_start_invalid",
+    "request": {"method": "POST", "path": "/api/provision", "body": {"start": 0}},
+    "response": {"status": 400, "body": {"error": "start must be between 1 and 9999"}}
+  },
+  {
+    "name": "provision_sim_tap_writes_card",
+    "setup": [{"method": "POST", "path": "/api/provision", "body": {"start": 5}}],
+    "request": {"method": "POST", "path": "/api/sim/tap", "body": {"uid": "04000001"}},
+    "response": {"status": 200, "body": {"provision": {"uid": "04000001", "number": 5, "result": "written", "message": "Next: card #6"}}}
+  },
+  {
+    "name": "provision_sim_tap_programmed_card",
+    "setup": [
+      {"method": "POST", "path": "/api/players", "body": {"uid": "04000001"}},
+      {"method": "POST", "path": "/api/provision", "body": {}}
+    ],
+    "request": {"method": "POST", "path": "/api/sim/tap", "body": {"uid": "04000002", "card": 1}},
+    "response": {"status": 200, "body": {"provision": {"uid": "04000002", "number": 1, "result": "adopted", "message": "Already programmed, now registered. Next: card #2"}}}
+  },
+  {
+    "name": "provision_status",
+    "setup": [
+      {"method": "POST", "path": "/api/provision", "body": {}},
+      {"method": "POST", "path": "/api/sim/tap", "body": {"uid": "04000001"}}
+    ],
+    "request": {"method": "GET", "path": "/api/status"},
+    "response": {"status": 200, "body": {"players": 1, "provisioning": {"active": true, "next": 2, "programmed": 1, "last": {"uid": "04000001", "number": 1, "result": "written", "message": "Next: card #2"}}}}
+  },
+  {
+    "name": "players_clear",
+    "setup": [{"method": "POST", "path": "/api/players", "body": {"uid": "04000001"}}],
+    "request": {"method": "DELETE", "path": "/api/players"},
+    "response": {"status": 200, "body": {"players": []}}
+  },
+  {
+    "name": "players_clear_mid_game",
+    "setup": [
+      {"method": "POST", "path": "/api/game/select", "body": {"id": "fare_paid"}},
+      {"method": "POST", "path": "/api/game/start"}
+    ],
+    "request": {"method": "DELETE", "path": "/api/players"},
+    "response": {"status": 409, "body": {"error": "stop the game first"}}
+  },
+  {
+    "name": "provision_stop",
+    "setup": [{"method": "POST", "path": "/api/provision", "body": {}}],
+    "request": {"method": "POST", "path": "/api/provision/stop"},
+    "response": {"status": 200, "body": {"active": false, "next": 1, "overwrite": false, "programmed": 0, "last": null}}
+  },
+  {
+    "name": "sim_tap_programmed_card",
+    "setup": [
+      {"method": "POST", "path": "/api/enrollment", "body": {"open": false}},
+      {"method": "POST", "path": "/api/game/select", "body": {"id": "fare_paid"}},
+      {"method": "POST", "path": "/api/game/start"}
+    ],
+    "request": {"method": "POST", "path": "/api/sim/tap", "body": {"uid": "04000042", "card": 42}},
+    "response": {"status": 200, "body": {"outcome": "accepted", "player": 42, "uid": "04000042"}}
+  }
+]

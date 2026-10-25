@@ -1,0 +1,12 @@
+[
+  {
+    "name": "health",
+    "request": {"method": "GET", "path": "/api/health"},
+    "response": {"status": 200, "body": {"ok": true}}
+  },
+  {
+    "name": "unknown_route",
+    "request": {"method": "GET", "path": "/api/nope"},
+    "response": {"status": 404, "body": {"error": "not found"}}
+  }
+]
